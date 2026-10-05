@@ -317,7 +317,7 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
   <div id="runBox"><div id="runHead"><button id="runBack">← 이전</button><b id="runName"></b><button id="runHome">⟲ 처음으로</button><button id="runX" aria-label="닫기">✕</button></div><div id="runBig"></div></div>
 </div>
 <div id="courseModal" hidden role="dialog" aria-modal="true" aria-label="따라 만들기 코스">
-  <div id="courseBox"><div style="display:flex;align-items:center"><h2 style="flex:1">따라 만들기 코스</h2><button id="courseX" aria-label="닫기">✕</button></div><p class="cs">앱을 하나 골라 단계마다 안내를 따라 만들어 보세요. 다 만들면 기획서를 AI에게 붙여넣어 진짜 앱이 돼요. 위에서부터 차례로 하면 쉬워요.</p><div id="courseList"></div></div>
+  <div id="courseBox"><div style="display:flex;align-items:center"><h2 id="courseTitle" style="flex:1">따라 만들기 코스</h2><button id="courseX" aria-label="닫기">✕</button></div><p class="cs" id="courseSub">앱을 하나 골라 단계마다 안내를 따라 만들어 보세요. 다 만들면 기획서를 AI에게 붙여넣어 진짜 앱이 돼요. 위에서부터 차례로 하면 쉬워요.</p><div id="courseList"></div></div>
 </div>
 <div id="tourSpot" hidden></div><div id="tourPop" hidden role="dialog" aria-live="polite"></div>
 <div id="specModal" hidden role="dialog" aria-modal="true" aria-labelledby="specTitle">
@@ -1155,16 +1155,26 @@ var COURSES=[
 function courseSet(){try{return JSON.parse(localStorage.getItem('np_done')||'{}')}catch(e){return {}}}
 function courseDone(id){try{var d=courseSet();d[id]=1;localStorage.setItem('np_done',JSON.stringify(d))}catch(e){}
   var i=COURSES.map(function(c){return c.id}).indexOf(id),nx=COURSES[i+1];toast('🎉 '+COURSES[i].nm+' 완성! '+(nx?'다음은 「'+nx.nm+'」예요. 「따라 만들기」에서 골라요':'기획서를 AI에게 붙여넣어 진짜 앱을 만들어 보세요'))}
-function courseOpen(){var d=courseSet(),h='';
+function courseOpen(){var d=courseSet(),h='';$('courseTitle').textContent='따라 만들기 코스';$('courseSub').textContent='앱을 하나 골라 단계마다 안내를 따라 만들어 보세요. 다 만들면 기획서를 AI에게 붙여넣어 진짜 앱이 돼요. 위에서부터 차례로 하면 쉬워요.';
   COURSES.forEach(function(c){h+='<div class="crs"><div class="ci">'+c.ic+'</div><div class="cb"><b>'+esc(c.nm)+'</b>'+(d[c.id]?'<span class="dn">✅ 완료</span>':'')+'<div class="cd">'+esc(c.d)+'</div><div class="cu">'+c.uses.map(function(u){return '<span>'+esc(u)+'</span>'}).join('')+'</div><div class="ca"><button class="btn-main" data-cs="'+c.id+'">따라 만들기 ▶</button>'+(c.sample?'<button data-cx="'+c.id+'">완성본 구경</button>':'')+'</div></div></div>'});
   $('courseList').innerHTML=h;$('courseModal').hidden=false}
 function courseClose(){$('courseModal').hidden=true}
 function courseGo(id){var c=COURSES.filter(function(x){return x.id===id})[0];if(!c)return;courseClose();tourStart(c.steps(),id)}
 $('courseList').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.ex!=null&&b.dataset.ex!==''){var it=exList()[+b.dataset.ex];if(it){courseClose();build(it.fn());if(MODE==='app')setSub('flow');toast('「'+it.nm+'」 예시를 불러왔어요. 되돌리기로 이전 작업을 살릴 수 있어요')}return}
   if(b.dataset.cs)courseGo(b.dataset.cs);
   if(b.dataset.cx){var c=COURSES.filter(function(x){return x.id===b.dataset.cx})[0];courseClose();if(c&&c.sample){build(c.sample);setSub('flow');toast('완성본이에요. 「▶ 프로토타입 실행」으로 눌러 보세요')}}});
 $('courseX').onclick=courseClose;$('courseModal').addEventListener('pointerdown',function(e){if(e.target===$('courseModal'))courseClose()});
 window.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('courseModal').hidden)courseClose()});
+
+/* ---------- 예시 불러오기 모달 ---------- */
+var EXAMPLES={image:[{ic:'🖼️',nm:'교실 포스터 그림',d:'교복을 입은 학생들이 웃는 포스터 그림 기획이에요.',uses:['주제','스타일','장면','분위기','마무리'],fn:function(){return sampleImage}}],
+  video:[{ic:'🎬',nm:'학교 홍보 영상 30초',d:'정문에서 교실, 운동장까지 장면 4개로 이어지는 영상 기획이에요.',uses:['장면 4개','자막','소리','마무리'],fn:function(){return sampleVideo}}]};
+function exList(){if(MODE==='app')return COURSES.filter(function(c){return c.sample}).map(function(c){return {ic:c.ic,nm:c.nm.replace(/^\d+\.\s*/,''),d:c.d,uses:c.uses,fn:function(){return c.sample}}});return EXAMPLES[MODE]||[]}
+function exOpen(){var L=exList(),h='';$('courseTitle').textContent='예시 불러오기';$('courseSub').textContent='완성된 예시를 골라 보세요. 지금 작업은 바뀌지만, ↶ 되돌리기로 다시 살릴 수 있어요.';
+  L.forEach(function(c,i){h+='<div class="crs"><div class="ci">'+c.ic+'</div><div class="cb"><b>'+esc(c.nm)+'</b><div class="cd">'+esc(c.d)+'</div><div class="cu">'+c.uses.map(function(u){return '<span>'+esc(u)+'</span>'}).join('')+'</div><div class="ca"><button class="btn-main" data-ex="'+i+'">이 예시 불러오기</button></div></div></div>'});
+  $('courseList').innerHTML=h;$('courseModal').hidden=false}
+$('bSample').onclick=exOpen;$('bSample2').onclick=exOpen;
 function startTourBtn(){if(VIEW)return;if(MODE==='app')courseOpen();else tourStart()}
 function tourStart(steps,cid){
   if(VIEW)return;TSTEPS=Array.isArray(steps)?steps:TOURSET[MODE];lastCourse=Array.isArray(steps)?cid:null;if(MODE==='app'&&SUB!=='plan'){SUB='plan';applySub()}
@@ -1242,7 +1252,6 @@ function sampleVideo(N,E){
     av=N('v_avoid',850,260,{items:'어색한 손가락, 깜빡이는 화면, 깨진 글자'});
   E(s1,s2,'컷');E(s2,s3,'디졸브');E(s3,s4,'페이드');E(s4,fi);E(tx,s1);E(sd,fi);E(av,fi)}
 function sample(){build(MODE==='app'?sampleApp:MODE==='image'?sampleImage:sampleVideo)}
-$('bSample').onclick=sample;$('bSample2').onclick=sample;
 $('bClear').onclick=function(){if(!S.nodes.length)return;push();S.nodes=[];S.edges=[];sel=null;P=newP();refreshAll();inspector();toast('모두 지웠어요. 되돌리기로 돌릴 수 있어요')};
 $('bUndo').onclick=undo;
 
