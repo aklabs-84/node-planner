@@ -226,6 +226,14 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
 .pref .chip{display:block;background:var(--cbg);color:var(--ink);border-radius:8px;padding:4px 8px;margin-top:3px;line-height:1.3;word-break:break-all}
 .pref a{color:var(--accent);cursor:pointer;font-weight:600}
 @media (max-width:900px){.pref{display:none}}
+#courseModal{position:fixed;inset:0;z-index:56;background:rgba(20,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+#courseModal[hidden]{display:none}
+#courseBox{width:min(640px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);color:var(--ink);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:18px}
+#courseBox h2{margin:0 0 4px;font-size:18px}#courseBox .cs{margin:0 0 12px;font-size:13px;color:var(--sub);line-height:1.5}
+.crs{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;background:var(--bg)}
+.crs .ci{font-size:28px;line-height:1}.crs .cb{flex:1;min-width:0}.crs b{font-size:15px}.crs .cd{font-size:13px;color:var(--sub);margin:2px 0 6px;line-height:1.45}
+.crs .cu{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.crs .cu span{font-size:11px;padding:1px 8px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--sub)}
+.crs .ca{display:flex;gap:6px;flex-wrap:wrap}.crs .dn{color:#1a8a4a;font-size:12px;font-weight:700;margin-left:6px}
 #runModal{position:fixed;inset:0;z-index:55;background:rgba(20,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 #runBox{width:min(460px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:10px;background:var(--panel);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:14px}
 #runHead{display:flex;align-items:center;gap:8px}
@@ -307,6 +315,9 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
 </main>
 <div id="runModal" hidden role="dialog" aria-modal="true" aria-label="프로토타입 실행">
   <div id="runBox"><div id="runHead"><button id="runBack">← 이전</button><b id="runName"></b><button id="runHome">⟲ 처음으로</button><button id="runX" aria-label="닫기">✕</button></div><div id="runBig"></div></div>
+</div>
+<div id="courseModal" hidden role="dialog" aria-modal="true" aria-label="따라 만들기 코스">
+  <div id="courseBox"><div style="display:flex;align-items:center"><h2 style="flex:1">따라 만들기 코스</h2><button id="courseX" aria-label="닫기">✕</button></div><p class="cs">앱을 하나 골라 단계마다 안내를 따라 만들어 보세요. 다 만들면 기획서를 AI에게 붙여넣어 진짜 앱이 돼요. 위에서부터 차례로 하면 쉬워요.</p><div id="courseList"></div></div>
 </div>
 <div id="tourSpot" hidden></div><div id="tourPop" hidden role="dialog" aria-live="polite"></div>
 <div id="specModal" hidden role="dialog" aria-modal="true" aria-labelledby="specTitle">
@@ -956,7 +967,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&specOpen())
 $('en').onchange=function(){if(specOpen())$('spec').value=specText()};
 
 /* ---------- 따라 만들기 (앱 모드 투어) ---------- */
-var TOURS=null,tourTimer=null,tourKey=-1;
+var TOURS=null,tourTimer=null,tourKey=-1,lastCourse=null;
 function tFirst(t){return ofType(t)[0]}
 function tEdgeOf(fa,ta){return S.edges.filter(function(e){var a=nb(e.from),b=nb(e.to);return a&&b&&a.type===fa&&b.type===ta})}
 function tPal(t){return function(){return document.querySelector('.pitem[data-t="'+t+'"]')}}
@@ -1011,13 +1022,157 @@ TOURSET.video=[
  tFil('📐 길이·비율·스타일','완성 카드를 눌러 보고 전체 길이, 화면 비율, 영상 스타일을 모두 골라요.','v_final',['total','ratio','style'],0,0),
  {t:'🧮 시간 맞추기',x:'장면들의 초를 모두 더한 값이 전체 길이와 같아야 해요. 장면의 초나 전체 길이를 바꿔서 맞춰 보세요.',h:'예: 5초 + 10초 장면이면 전체 길이를 15초로 골라요.',el:function(){return $('insp')},done:function(){var f=ofType('v_final')[0],t=f?parseInt(fv(f,'total'),10):0,sum=0;ofType('v_scene').forEach(function(n){sum+=parseInt(fv(n,'sec'),10)||0});return t>0&&sum===t}},
  tDoc(),tPr()];
-function tourStart(){
-  if(VIEW)return;TSTEPS=TOURSET[MODE];if(MODE==='app'&&SUB!=='plan'){SUB='plan';applySub()}
+
+/* ---------- 따라 만들기 코스 (앱 모드) ---------- */
+function tDef(typ,k){var d=TYPES[typ].f.filter(function(x){return x.k===k})[0];return d?d.d:''}
+function tChg(title,x,typ,k,i,h){return {t:title,x:x,c:1,h:h||'카드를 한 번 눌러 고르면 오른쪽에 칸이 나와요. 거기에 쓰고 「다 썼어요」를 눌러요.',el:function(){return $('insp')},done:function(){var n=ofType(typ)[i||0],v=n?fvt(n,k):'';return !!v&&v!==tDef(typ,k)}}}
+function tNum(typ,n,title,x){return {t:title,x:x,h:'왼쪽 보관함의 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal(typ),done:function(){return ofType(typ).length>=n}}}
+function tL(fa,ta,n,title,x,i){return {t:title,x:x,h:'앞 카드 오른쪽 파란 동그라미를 마우스로 잡고, 뒤 카드 위까지 끌어서 놓아요.',el:function(){var q=ofType(fa)[i||0];return q&&els[q.id]?els[q.id].querySelector('.port.out'):null},done:function(){return tEdgeOf(fa,ta).length>=n}}}
+function tLab(title,x,n){return {t:title,c:1,x:x,h:'선을 한 번 눌러 고르면 오른쪽에 이름 칸이 나와요.',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').filter(function(e){return !!(e.label||'').trim()}).length>=n}}}
+function tSet(title,x,typ,k,v,i){return {t:title,x:x,h:'카드를 눌러 고르면 오른쪽에 칸이 나와요. 거기서 골라요.',el:function(){return $('insp')},done:function(){var n=ofType(typ)[i||0];return !!n&&fv(n,k)===v}}}
+function tSeeRes(){return P.extra>=1&&!!P.cur&&S.edges.some(function(e){var f=nb(e.from);return e.to===P.cur&&f&&f.type==='result'})}
+function tRun1(){return {t:'▶ 프로토타입 실행',x:'오른쪽 위 「▶ 프로토타입 실행」을 눌러 큰 화면으로 내 앱을 열어 보세요.',el:function(){return $('bRun')},done:function(){return !!TOURS.ran}}}
+function tClose1(){return {t:'✕ 닫기',x:'다 봤으면 오른쪽 위 ✕를 눌러 닫아요.',el:function(){return $('runX')},done:function(){return !runOpen()}}}
+function tPress(x,fn){return {t:'👆 눌러 보기',x:x,el:function(){return $('runBig')},done:fn}}
+function tMis(ex){return [tNum('custom',1,'🎯 도전! 내 기능 카드','위 카드로 표현할 수 없는 나만의 기능을 덧붙여 봐요. 「내 기능 카드」를 놓아요. '+ex),
+  tL('custom','screen',1,'🎯 도전: 화면에 이어 주기','내 기능 카드를 어느 화면에 붙일지 정해서, 카드의 ● 점을 그 화면으로 이어요.'),
+  tChg('🎯 도전: 기능 설명 쓰기','기능 이름과 「어떻게 동작해야 하나요?」를 써요. 이 글이 기획서에 들어가 AI가 그대로 만들어 줘요.','custom','name',0)]}
+function tHead(){var a=TOURSET.app;return [a[0],a[3],a[4]]}
+function tSpecEnd(){return TOURSET.app[12]}
+var COURSES=[
+ {id:'c0',ic:'🌱',nm:'워밍업: 화면 이어 보기',d:'화면 두 장을 만들고 버튼으로 이어서 눌러 봐요. 가장 쉬워요.',uses:['화면','선 이어기'],steps:function(){return TOURSET.app},sample:null},
+ {id:'c1',ic:'🍱',nm:'1. 우리 반 점심 투표',d:'메뉴를 고르고 투표하면 막대그래프가 올라가는 앱이에요.',uses:['화면','선택지','저장','결과'],
+  steps:function(){return tHead().concat([
+   tNum('screen',3,'📱 화면 3장 놓기','화면 카드를 3장 놓아요. 시작 화면, 투표 화면, 결과 화면이에요.'),
+   tL('screen','screen',1,'🔗 시작 → 투표 화면 잇기','첫 번째 화면(시작)에서 두 번째 화면(투표)으로 선을 이어요.',null,0),
+   tLab('🏷️ 버튼 이름 붙이기','방금 이은 선이 버튼이 돼요. 이름을 써요. (예: 투표하러 가기)',1),
+   tNum('choice',1,'🗳️ 선택지 카드 놓기','투표할 메뉴 목록이에요. 「선택지」 카드를 놓아요.'),
+   tL('choice','screen',1,'🔗 선택지 → 투표 화면 잇기','선택지 카드의 ● 점을 투표 화면(두 번째)으로 이어요. 그러면 그 화면 안에 메뉴가 나타나요.',null,0),
+   tChg('✍️ 메뉴 바꿔 쓰기','「선택지」 칸에 우리 반이 고르고 싶은 메뉴를 쉼표로 나눠 써요.','choice','opts'),
+   tNum('save',1,'💾 저장 카드 놓기','투표한 것을 모아 두는 카드예요.'),
+   tL('screen','save',1,'🔗 투표 화면 → 저장 잇기','두 번째(투표) 화면의 ● 점을 저장 카드로 이어요. 그 화면에 저장 버튼이 생겨요.',null,1),
+   tNum('result',1,'📊 결과 카드 놓기','모은 투표를 보여 주는 카드예요.'),
+   tL('save','result',1,'🔗 저장 → 결과 잇기','저장 카드의 ● 점을 결과 카드로 이어요.'),
+   tL('result','screen',1,'🔗 결과 → 결과 화면 잇기','결과 카드의 ● 점을 세 번째(결과) 화면으로 이어요.',null,0),
+   tL('screen','screen',2,'🔗 투표 → 결과 화면 잇기','두 번째 화면에서 세 번째 화면으로 선을 이어요. 나중에 이 선이 「투표 끝」 버튼이 돼요.',null,1),
+   tRun1(),
+   tPress('메뉴를 하나 고르고 💾 저장 버튼을 눌러 보세요. 그러면 한 표가 쌓여요.',function(){return P.extra>=1}),
+   tPress('이제 결과 화면으로 가는 버튼을 눌러 보세요. 막대그래프에 내 표가 보여요!',tSeeRes),
+   tClose1()]).concat(tMis('(예: 한 번만 투표하게 막기)')).concat([tSpecEnd()])},
+  sample:function(N,E){
+   N('idea',40,-60,{title:'우리 반 점심 투표',goal:'점심 메뉴를 쉽게 정해요'});N('users',240,-60,{who:'우리 반 친구들',when:'점심시간 직전 교실에서'});
+   N('problem',440,-60,{problem:'점심 메뉴를 정하는 데 10분이나 걸려요',better:'1분 안에 투표로 정해요'});N('must',640,-60,{f1:'메뉴에 투표하기',f2:'결과 보기',f3:'한 번만 투표하게 막기'});
+   var st=N('screen',40,110,{name:'시작 화면',heading:'우리 반 점심 투표',body:'오늘 점심을 같이 정해 봐요!'}),ch=N('choice',320,275,{}),vo=N('screen',320,110,{name:'투표 화면',heading:'투표해요',body:''}),sv=N('save',600,275,{}),rs=N('result',880,275,{}),rsc=N('screen',600,110,{name:'결과 화면',heading:'투표 끝!',body:'친구들 결과를 확인해 보세요.'}),cu=N('custom',880,110,{name:'한 번만 투표',what:'한 사람이 한 번만 투표하게 막아요'});
+   E(st,vo,'투표하러 가기');E(ch,vo);E(vo,sv,'투표하기');E(vo,rsc,'투표 끝');E(sv,rs);E(rs,rsc);E(cu,vo)}},
+ {id:'c2',ic:'📮',nm:'2. 우리 반 건의함',d:'하고 싶은 말을 글로 남기고, 친구들이 남긴 글을 목록으로 모아 봐요.',uses:['화면','입력 칸','저장','결과(글 목록)'],
+  steps:function(){return tHead().concat([
+   tNum('screen',2,'📱 화면 2장 놓기','화면 카드를 2장 놓아요. 글을 쓰는 화면과 모아 보는 화면이에요.'),
+   tL('screen','screen',1,'🔗 쓰는 화면 → 모아보기 화면 잇기','첫 번째 화면에서 두 번째 화면으로 선을 이어요.',null,0),
+   tLab('🏷️ 버튼 이름 붙이기','방금 이은 선이 버튼이 돼요. 이름을 써요. (예: 모아 보기)',1),
+   tNum('input',1,'✍️ 입력 칸 놓기','글을 쓰는 칸이에요. 「입력 칸」 카드를 놓아요.'),
+   tL('input','screen',1,'🔗 입력 칸 → 쓰는 화면 잇기','입력 칸의 ● 점을 첫 번째(쓰는) 화면으로 이어요.',null,0),
+   tChg('✍️ 칸 이름 바꾸기','「칸 이름」을 바꿔요. (예: 건의 내용)','input','label'),
+   tNum('save',1,'💾 저장 카드 놓기','쓴 글을 모아 두는 카드예요.'),
+   tL('screen','save',1,'🔗 쓰는 화면 → 저장 잇기','첫 번째(쓰는) 화면의 ● 점을 저장 카드로 이어요. 그 화면에 저장 버튼이 생겨요.',null,0),
+   tNum('result',1,'📊 결과 카드 놓기','모은 글을 보여 주는 카드예요.'),
+   tSet('📋 입력한 글 보여 주기로 바꾸기','결과 카드를 눌러서 「무엇을 보여줄까요?」를 「입력한 글 모아보기」로 바꿔요.','result','src','입력한 글 모아보기'),
+   tL('save','result',1,'🔗 저장 → 결과 잇기','저장 카드의 ● 점을 결과 카드로 이어요.'),
+   tL('result','screen',1,'🔗 결과 → 모아보기 화면 잇기','결과 카드의 ● 점을 두 번째(모아보기) 화면으로 이어요.',null,0),
+   tRun1(),
+   tPress('글을 한 줄 쓰고 💾 저장 버튼을 눌러 보세요. 몇 번 더 써서 저장해도 좋아요.',function(){return P.entries.length>=1}),
+   tPress('모아 보기 버튼을 눌러 보세요. 방금 쓴 글이 목록으로 쌓여 있어요!',tSeeRes),
+   tClose1()]).concat(tMis('(예: 이름은 숨기고 쓰기)')).concat([tSpecEnd()])},
+  sample:function(N,E){
+   N('idea',40,-60,{title:'우리 반 건의함',goal:'하고 싶은 말을 편하게 남겨요'});N('users',240,-60,{who:'우리 반 친구들',when:'쉬는 시간이나 집에서'});
+   N('problem',440,-60,{problem:'교실에서 직접 말하기 부끄러워요',better:'글로 가볍게 남겨요'});N('must',640,-60,{f1:'건의 글 쓰기',f2:'모아 보기'});N('look',840,-60,{mood:'차분한',color:'연한 초록'});
+   var st=N('screen',40,110,{name:'건의 쓰기',heading:'건의함',body:'하고 싶은 말을 남겨 주세요'}),inp=N('input',320,275,{label:'건의 내용',ph:'예: 급식에 과일이 있으면 좋겠어요'}),sv=N('save',600,275,{what:'친구들이 남긴 건의 글'}),rs=N('result',880,275,{title:'친구들의 건의',src:'입력한 글 모아보기',show:'글 목록'}),r2=N('screen',600,110,{name:'모아보기',heading:'모인 건의',body:''});
+   E(inp,st);E(st,sv,'남기기');E(st,r2,'모아 보기');E(sv,rs);E(rs,r2)}},
+ {id:'c3',ic:'📔',nm:'3. 감정 일기장',d:'오늘 기분을 고르고 한 줄 일기를 쓰면 카드로 쌓여요.',uses:['화면','입력 칸','선택지','저장','결과(카드)'],
+  steps:function(){return tHead().concat([
+   tNum('screen',2,'📱 화면 2장 놓기','화면 카드를 2장 놓아요. 일기를 쓰는 화면과 모아 보는 화면이에요.'),
+   tL('screen','screen',1,'🔗 쓰는 화면 → 모아보기 화면 잇기','첫 번째 화면에서 두 번째 화면으로 선을 이어요.',null,0),
+   tLab('🏷️ 버튼 이름 붙이기','방금 이은 선이 버튼이 돼요. 이름을 써요. (예: 일기 보러 가기)',1),
+   tNum('choice',1,'🗳️ 선택지 카드 놓기','오늘 기분을 고르는 카드예요.'),
+   tL('choice','screen',1,'🔗 선택지 → 쓰는 화면 잇기','선택지의 ● 점을 첫 번째(쓰는) 화면으로 이어요.',null,0),
+   tChg('😊 기분 질문 바꾸기','「질문」을 바꿔요. (예: 오늘 기분은?) 그리고 선택지도 기분 이름으로 바꿔요.','choice','q'),
+   tNum('input',1,'✍️ 입력 칸 놓기','일기를 쓰는 칸이에요.'),
+   tL('input','screen',1,'🔗 입력 칸 → 쓰는 화면 잇기','입력 칸의 ● 점을 첫 번째(쓰는) 화면으로 이어요.',null,0),
+   tChg('✍️ 칸 이름 바꾸기','「칸 이름」을 바꿔요. (예: 오늘 있었던 일)','input','label'),
+   tNum('save',1,'💾 저장 카드 놓기','기분과 일기를 함께 모아 두는 카드예요.'),
+   tL('screen','save',1,'🔗 쓰는 화면 → 저장 잇기','첫 번째(쓰는) 화면의 ● 점을 저장 카드로 이어요.',null,0),
+   tNum('result',1,'📊 결과 카드 놓기','일기를 보여 주는 카드예요.'),
+   tSet('📋 입력한 글 보여 주기','결과 카드의 「무엇을 보여줄까요?」를 「입력한 글 모아보기」로 바꿔요.','result','src','입력한 글 모아보기'),
+   tSet('🃏 카드 모양으로 보기','「보여주는 방식」을 「카드」로 바꿔요. 일기가 카드로 쌓여요.','result','show','카드'),
+   tL('save','result',1,'🔗 저장 → 결과 잇기','저장 카드의 ● 점을 결과 카드로 이어요.'),
+   tL('result','screen',1,'🔗 결과 → 모아보기 화면 잇기','결과 카드의 ● 점을 두 번째(모아보기) 화면으로 이어요.',null,0),
+   tRun1(),
+   tPress('기분을 하나 고르고 한 줄을 쓴 뒤 💾 저장 버튼을 눌러 보세요.',function(){return P.entries.length>=1}),
+   tPress('모아 보기 버튼을 눌러요. 일기가 카드로 쌓여 있어요!',tSeeRes),
+   tClose1()]).concat(tMis('(예: 기분마다 다른 색으로 보여 주기)')).concat([tSpecEnd()])},
+  sample:function(N,E){
+   N('idea',40,-60,{title:'감정 일기장',goal:'오늘 기분과 한 줄 일기를 남겨요'});N('users',240,-60,{who:'우리 반 친구들',when:'하교 전 5분'});
+   N('problem',440,-60,{problem:'내 마음을 말로 하기 어려워요',better:'기분을 고르고 한 줄만 써요'});N('must',640,-60,{f1:'기분 고르기',f2:'한 줄 일기 쓰기',f3:'일기 모아 보기'});N('look',840,-60,{mood:'차분한',color:'연한 보라'});
+   var st=N('screen',40,110,{name:'일기 쓰기',heading:'오늘의 마음',body:'기분을 고르고 한 줄을 써요'}),ch=N('choice',320,275,{q:'오늘 기분은?',opts:'😊 좋아요, 😐 그냥 그래요, 😢 힘들어요'}),inp=N('input',320,400,{label:'오늘 있었던 일',ph:'한 줄만 써도 좋아요'}),sv=N('save',600,275,{what:'기분과 한 줄 일기'}),rs=N('result',880,275,{title:'내 일기 모음',src:'입력한 글 모아보기',show:'카드'}),r2=N('screen',600,110,{name:'일기 모아보기',heading:'내 일기',body:''});
+   E(ch,st);E(inp,st);E(st,sv,'저장하기');E(st,r2,'일기 보러 가기');E(sv,rs);E(rs,r2)}},
+ {id:'c4',ic:'🏫',nm:'4. 동아리 소개 앱',d:'홈 화면에서 소개, 활동, 가입 방법 화면으로 이동하는 안내 앱이에요.',uses:['화면','화면 이동 버튼'],
+  steps:function(){return tHead().concat([
+   tNum('screen',4,'📱 화면 4장 놓기','화면 카드를 4장 놓아요. 홈, 소개, 활동, 가입 방법 화면이에요.'),
+   tL('screen','screen',3,'🔗 홈에서 세 화면으로 잇기','첫 번째(홈) 화면에서 나머지 세 화면으로 선을 각각 이어요. 선이 3개가 되면 돼요.',null,0),
+   tLab('🏷️ 버튼 이름 붙이기','선을 하나씩 눌러서 이름을 써요. 3개 모두! (예: 동아리 소개, 활동 모습, 가입 방법)',3),
+   tChg('🏠 홈 화면 제목 쓰기','첫 번째(홈) 화면의 「화면 큰 제목」을 써요. (예: 우리 동아리에 오세요)','screen','heading',0),
+   tChg('📝 소개 글 쓰기','두 번째 화면의 「안내 글」에 소개 내용을 써요.','screen','body',1),
+   tRun1(),
+   tPress('홈의 버튼을 눌러 다른 화면으로 가 보세요. 「← 이전」으로 돌아올 수도 있어요.',function(){return !!TOURS.pc}),
+   tClose1()]).concat(tMis('(예: 활동 사진 모아 보기)')).concat([tSpecEnd()])},
+  sample:function(N,E){
+   N('idea',40,-60,{title:'우리 동아리 소개',goal:'새 친구들이 동아리를 쉽게 알아요'});N('users',240,-60,{who:'우리 학교 친구들'});
+   N('problem',440,-60,{problem:'동아리가 뭘 하는지 알기 어려워요',better:'한 곳에서 보여 줘요'});N('must',640,-60,{f1:'소개 보기',f2:'활동 모습 보기',f3:'가입 방법 보기'});
+   var h=N('screen',40,110,{name:'홈',heading:'우리 동아리에 오세요',body:'궁금한 메뉴를 눌러 보세요'}),a=N('screen',340,40,{name:'동아리 소개',heading:'우리는 이런 동아리예요',body:'매주 수요일에 모여 함께 만들어요.'}),b=N('screen',340,190,{name:'활동 모습',heading:'이런 활동을 해요',body:'앱 만들기, 발표하기, 전시회'}),c=N('screen',340,340,{name:'가입 방법',heading:'가입은 쉬워요',body:'담임 선생님께 말씀드리고 신청서를 내요.'}),cu=N('custom',640,190,{name:'활동 사진 모아 보기',what:'사진을 올리면 목록으로 보여 줘요'});
+   E(h,a,'동아리 소개');E(h,b,'활동 모습');E(h,c,'가입 방법');E(cu,b)}},
+ {id:'c5',ic:'🤖',nm:'5. AI 메뉴 추천',d:'오늘 기분을 쓰면 AI가 점심 메뉴를 추천해 주는 앱이에요.',uses:['화면','입력 칸','AI 도우미','결과(AI 답변)'],
+  steps:function(){return tHead().concat([
+   tNum('screen',2,'📱 화면 2장 놓기','화면 카드를 2장 놓아요. 질문하는 화면과 추천받는 화면이에요.'),
+   tL('screen','screen',1,'🔗 질문 화면 → 추천 화면 잇기','첫 번째 화면에서 두 번째 화면으로 선을 이어요.',null,0),
+   tLab('🏷️ 버튼 이름 붙이기','방금 이은 선이 버튼이 돼요. 이름을 써요. (예: 추천받기)',1),
+   tNum('input',1,'✍️ 입력 칸 놓기','AI에게 알려 줄 내용을 쓰는 칸이에요.'),
+   tL('input','screen',1,'🔗 입력 칸 → 질문 화면 잇기','입력 칸의 ● 점을 첫 번째(질문) 화면으로 이어요.',null,0),
+   tChg('✍️ 칸 이름 바꾸기','「칸 이름」을 바꿔요. (예: 오늘 기분이나 먹고 싶은 것)','input','label'),
+   tNum('ai',1,'🤖 AI 도우미 놓기','AI에게 시킬 일을 적는 카드예요.'),
+   tL('ai','screen',1,'🔗 AI → 질문 화면 잇기','AI 카드의 ● 점을 첫 번째(질문) 화면으로 이어요.',null,0),
+   tChg('💬 AI에게 시킬 말 쓰기','「AI에게 무엇을 시킬까요?」를 바꿔요. (예: 입력한 내용에 맞는 점심 메뉴 3개를 추천해 줘)','ai','ask'),
+   tNum('result',1,'📊 결과 카드 놓기','AI의 답을 보여 주는 카드예요.'),
+   tSet('🤖 AI 답변으로 바꾸기','결과 카드의 「무엇을 보여줄까요?」를 「AI 답변」으로 바꿔요.','result','src','AI 답변'),
+   tL('result','screen',1,'🔗 결과 → 추천 화면 잇기','결과 카드의 ● 점을 두 번째(추천) 화면으로 이어요.',null,0),
+   tRun1(),
+   tPress('추천받기 버튼을 눌러 보세요. 미리보기에서는 진짜 AI 대신 예시 상자가 나와요.',function(){return !!TOURS.pc}),
+   tClose1()]).concat(tMis('(예: 추천받은 메뉴를 저장해 두기)')).concat([tSpecEnd()])},
+  sample:function(N,E){
+   N('idea',40,-60,{title:'AI 메뉴 추천',goal:'오늘 먹을 메뉴를 AI가 골라 줘요'});N('users',240,-60,{who:'메뉴 고르기 힘든 친구들'});
+   N('problem',440,-60,{problem:'매일 뭘 먹을지 고민돼요',better:'기분을 쓰면 AI가 추천해요'});N('must',640,-60,{f1:'기분 쓰기',f2:'AI 추천 받기'});
+   var st=N('screen',40,110,{name:'질문 화면',heading:'오늘 뭐 먹지?',body:'기분이나 먹고 싶은 것을 알려 주세요'}),inp=N('input',320,275,{label:'오늘 기분이나 먹고 싶은 것',ph:'예: 매콤한 게 땡겨요'}),ai=N('ai',320,400,{ask:'입력한 내용에 맞는 점심 메뉴 3개를 이유와 함께 추천해 줘'}),r2=N('screen',600,110,{name:'추천 화면',heading:'AI의 추천',body:''}),rs=N('result',880,275,{title:'추천 메뉴',src:'AI 답변',show:'카드'});
+   E(inp,st);E(ai,st);E(st,r2,'추천받기');E(rs,r2)}}
+];
+function courseSet(){try{return JSON.parse(localStorage.getItem('np_done')||'{}')}catch(e){return {}}}
+function courseDone(id){try{var d=courseSet();d[id]=1;localStorage.setItem('np_done',JSON.stringify(d))}catch(e){}
+  var i=COURSES.map(function(c){return c.id}).indexOf(id),nx=COURSES[i+1];toast('🎉 '+COURSES[i].nm+' 완성! '+(nx?'다음은 「'+nx.nm+'」예요. 「따라 만들기」에서 골라요':'기획서를 AI에게 붙여넣어 진짜 앱을 만들어 보세요'))}
+function courseOpen(){var d=courseSet(),h='';
+  COURSES.forEach(function(c){h+='<div class="crs"><div class="ci">'+c.ic+'</div><div class="cb"><b>'+esc(c.nm)+'</b>'+(d[c.id]?'<span class="dn">✅ 완료</span>':'')+'<div class="cd">'+esc(c.d)+'</div><div class="cu">'+c.uses.map(function(u){return '<span>'+esc(u)+'</span>'}).join('')+'</div><div class="ca"><button class="btn-main" data-cs="'+c.id+'">따라 만들기 ▶</button>'+(c.sample?'<button data-cx="'+c.id+'">완성본 구경</button>':'')+'</div></div></div>'});
+  $('courseList').innerHTML=h;$('courseModal').hidden=false}
+function courseClose(){$('courseModal').hidden=true}
+function courseGo(id){var c=COURSES.filter(function(x){return x.id===id})[0];if(!c)return;courseClose();tourStart(c.steps(),id)}
+$('courseList').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+  if(b.dataset.cs)courseGo(b.dataset.cs);
+  if(b.dataset.cx){var c=COURSES.filter(function(x){return x.id===b.dataset.cx})[0];courseClose();if(c&&c.sample){build(c.sample);setSub('flow');toast('완성본이에요. 「▶ 프로토타입 실행」으로 눌러 보세요')}}});
+$('courseX').onclick=courseClose;$('courseModal').addEventListener('pointerdown',function(e){if(e.target===$('courseModal'))courseClose()});
+window.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('courseModal').hidden)courseClose()});
+function startTourBtn(){if(VIEW)return;if(MODE==='app')courseOpen();else tourStart()}
+function tourStart(steps,cid){
+  if(VIEW)return;TSTEPS=Array.isArray(steps)?steps:TOURSET[MODE];lastCourse=Array.isArray(steps)?cid:null;if(MODE==='app'&&SUB!=='plan'){SUB='plan';applySub()}
   if(S.nodes.length){push();S.nodes=[];S.edges=[];sel=null;P=newP();refreshAll();inspector();toast('새 판에서 시작해요. 되돌리기로 이전 기획을 살릴 수 있어요')}
   TOURS={on:true,i:0,pc:false,ok:{}};tourKey=-1;
   clearInterval(tourTimer);tourTimer=setInterval(tourPlace,300);tourCheck()}
 function tourEnd(done){
-  if(!TOURS)return;TOURS.on=false;TOURS=null;clearInterval(tourTimer);
+  if(!TOURS)return;TOURS.on=false;TOURS=null;clearInterval(tourTimer);if(done&&lastCourse)courseDone(lastCourse);
   $('tourSpot').hidden=true;$('tourPop').hidden=true;
   if(done)toast(MODE==='app'?'🎉 따라 만들기 끝! 복사한 기획서를 AI에게 붙여넣어 보세요':'🎉 따라 만들기 끝! 복사한 프롬프트를 '+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣어 보세요')}
 function tStepDone(i){var st=TSTEPS[i],c=st.done();
@@ -1048,7 +1203,7 @@ function tourPlace(){
     else if(r.bottom+14+ph<=vh){x=r.left;y=r.bottom+14}
     else{x=r.left;y=r.top-14-ph}}
   pop.style.left=Math.max(10,Math.min(x,vw-pw-10))+'px';pop.style.top=Math.max(10,Math.min(y,vh-ph-10))+'px'}
-$('bTour').onclick=tourStart;$('bTour2').onclick=tourStart;
+$('bTour').onclick=startTourBtn;$('bTour2').onclick=startTourBtn;
 $('proto').addEventListener('click',function(){if(TOURS)TOURS.pc=true});$('runBig').addEventListener('click',function(){if(TOURS)TOURS.pc=true});
 document.addEventListener('click',function(){setTimeout(tourCheck,0)},true);
 document.addEventListener('input',function(){setTimeout(tourCheck,0)},true);
