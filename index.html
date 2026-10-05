@@ -167,11 +167,19 @@ body.view #bEdit{display:inline-block}
 body.view #pal,body.view #inspwrap,body.view .editonly{display:none}
 body.view main{grid-template-columns:minmax(0,1fr) 340px}
 .protoempty{color:var(--sub);font-size:13px;text-align:center;padding:40px 16px}
-#spec{margin-top:8px;font-size:12px;display:none}
-#specbar{display:none;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+#specModal{position:fixed;inset:0;z-index:60;background:rgba(20,20,30,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+#specModal[hidden]{display:none}
+#specBox{background:var(--panel);color:var(--ink);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:min(820px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:10px;padding:18px}
+#specHead{display:flex;align-items:center;gap:8px}
+#specHead h2{margin:0;font-size:17px;flex:1}
+#specX{border:none;background:none;font-size:20px;line-height:1;padding:4px 8px}
+#specbar{display:none;gap:6px;flex-wrap:wrap;align-items:center}
 #specbar label{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px;width:100%}
 #specbar input{width:auto}
-#specbar button{font-size:12px;padding:4px 10px}
+#specbar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#spec{flex:1;min-height:260px;height:52vh;font-size:13px;line-height:1.55;resize:none;width:100%}
+#specFoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#specmsg{flex:1;font-size:12px;color:var(--sub);min-width:140px}
 @media (max-width:1100px){main{grid-template-columns:176px minmax(0,1fr) 300px}}
 @media (max-width:900px){
   body{height:auto;min-height:100%;display:block}
@@ -233,15 +241,20 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
         <button id="bSubmit" class="btn-main" style="margin-top:8px;width:100%">클래스로그AI에 제출하기</button>
         <div class="note" id="clMsg"></div>
       </div>
-      <div id="specmsg" style="font-size:12px;color:var(--sub)"></div>
-      <div id="specbar">
-        <label><input type="checkbox" id="en"> 영어 프롬프트로 바꿔 달라는 줄도 넣기</label>
-        <button id="bCopyDoc">기획서 전체 복사</button><button id="bCopyPr">프롬프트만 복사</button>
-      </div>
-      <textarea id="spec" rows="12" readonly></textarea>
     </div>
   </aside>
 </main>
+<div id="specModal" hidden role="dialog" aria-modal="true" aria-labelledby="specTitle">
+  <div id="specBox">
+    <div id="specHead"><h2 id="specTitle">기획서</h2><button id="specX" aria-label="닫기">✕</button></div>
+    <div id="specbar">
+      <button id="bCopyDoc">기획서 전체</button><button id="bCopyPr">프롬프트만</button>
+      <label><input type="checkbox" id="en"> 영어 프롬프트로 바꿔 달라는 줄도 넣기</label>
+    </div>
+    <textarea id="spec" readonly></textarea>
+    <div id="specFoot"><span id="specmsg"></span><button id="bCopyNow" class="btn-main">복사하기</button><button id="bSpecClose">닫기</button></div>
+  </div>
+</div>
 <script>
 (function(){
 'use strict';
@@ -433,7 +446,7 @@ function hint(){var t;
     if(miss)t='오른쪽 점검표의 ⚠️ 부분을 채우면 프롬프트가 더 구체적이 돼요 ('+miss+'곳)';
     else t='좋아요! 점검을 모두 통과했어요. 위쪽 버튼으로 프롬프트를 복사해 AI에 붙여넣어 보세요'}
   $('hint').textContent=t;$('empty').style.display=S.nodes.length?'none':'block'}
-function refreshAll(){syncNodes();drawEdges();hint();proto();applyView();if($('spec').style.display==='block')$('spec').value=specText()}
+function refreshAll(){syncNodes();drawEdges();hint();proto();applyView();if(specOpen())$('spec').value=specText()}
 
 /* ---------- 마우스 · 터치 ---------- */
 function startPan(e){drag={t:'pan',sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y};cv.classList.add('panning')}
@@ -548,7 +561,7 @@ function inspector(focusLabel){var box=$('insp');
       (k==='trans'?'<div class="pks" id="tpk">'+['컷','페이드','디졸브'].map(function(o){return '<button type="button" class="'+(o===e.label?'on':'')+'" data-v="'+o+'">'+o+'</button>'}).join('')+'</div>':'')+
       '<div class="note">'+note+'</div></div>';
     var inp=$('el');
-    function onEdit(){e.label=inp.value;drawEdges();proto();hint();if($('spec').style.display==='block')$('spec').value=specText();persist();
+    function onEdit(){e.label=inp.value;drawEdges();proto();hint();if(specOpen())$('spec').value=specText();persist();
       var g=$('tpk');if(g)g.querySelectorAll('button').forEach(function(bt){bt.classList.toggle('on',bt.dataset.v===inp.value)})}
     inp.addEventListener('input',function(){if(!editing){push();editing=true}onEdit()});inp.addEventListener('blur',function(){editing=false});
     var tp=$('tpk');if(tp)tp.addEventListener('click',function(ev){var bt=ev.target.closest('button');if(!bt)return;push();editing=false;inp.value=(inp.value===bt.dataset.v)?'':bt.dataset.v;onEdit()});
@@ -759,15 +772,26 @@ function specText(){var en=$('en').checked;
   if(MODE==='app')return specApp();
   if(specKind==='pr')return MODE==='image'?promptImage(en):promptVideo(en);
   return MODE==='image'?docImage(en):docVideo(en)}
-function copyText(msg){var t=$('spec'),m=$('specmsg');
-  try{navigator.clipboard.writeText(t.value).then(function(){m.textContent=msg},function(){m.textContent='아래 글을 선택해서 복사해 주세요.'})}catch(e){m.textContent='아래 글을 선택해서 복사해 주세요.'}}
-function showSpec(kind){specKind=kind;var t=$('spec');t.value=specText();t.style.display='block';$('specbar').style.display=MODE==='app'?'none':'flex';
-  t.scrollIntoView({block:'nearest',behavior:'smooth'});
-  copyText(MODE==='app'?'복사했어요. Gemini나 Claude에 붙여넣으면 돼요.':'복사했어요. '+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣으면 돼요.')}
+function specOpen(){return !$('specModal').hidden}
+function copyText(msg){var t=$('spec'),m=$('specmsg'),fb='글을 선택해서 복사해 주세요.';
+  try{navigator.clipboard.writeText(t.value).then(function(){m.textContent=msg},function(){m.textContent=fb;t.select()})}catch(e){m.textContent=fb;t.select()}}
+var SPEC_OK='복사했어요. ';
+function specOkMsg(){return MODE==='app'?SPEC_OK+'Gemini나 Claude에 붙여넣으면 돼요.':SPEC_OK+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣으면 돼요.'}
+function showSpec(kind){specKind=kind;var t=$('spec');t.value=specText();
+  $('specTitle').textContent=MODE==='app'?'앱 기획서':(kind==='pr'?(MODE==='image'?'이미지':'영상')+' 프롬프트':(MODE==='image'?'이미지':'영상')+' 기획서');
+  $('specbar').style.display=MODE==='app'?'none':'flex';
+  $('bCopyDoc').classList.toggle('on',kind==='doc');$('bCopyPr').classList.toggle('on',kind==='pr');
+  $('specModal').hidden=false;t.scrollTop=0;$('bCopyNow').focus();
+  copyText(specOkMsg())}
+function closeSpec(){$('specModal').hidden=true;$('specmsg').textContent=''}
 $('bSpec').onclick=function(){showSpec('doc')};
 $('bCopyDoc').onclick=function(){showSpec('doc')};
 $('bCopyPr').onclick=function(){showSpec('pr')};
-$('en').onchange=function(){if($('spec').style.display==='block')$('spec').value=specText()};
+$('bCopyNow').onclick=function(){copyText(specOkMsg())};
+$('bSpecClose').onclick=closeSpec;$('specX').onclick=closeSpec;
+$('specModal').addEventListener('mousedown',function(e){if(e.target===this)closeSpec()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&specOpen())closeSpec()});
+$('en').onchange=function(){if(specOpen())$('spec').value=specText()};
 
 /* ---------- 예시 ---------- */
 function build(fn){push();S.nodes=[];S.edges=[];S.seq=0;P=newP();
@@ -806,7 +830,7 @@ $('bUndo').onclick=undo;
 function setModeUI(){var m=MODES[MODE];
   $('tabs').querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.m===MODE)});
   $('bSpec').textContent=m.btn;$('specHint').textContent=m.hint;$('bSample2').textContent=m.sample;$('protoh').textContent=m.ph;
-  $('spec').style.display='none';$('specbar').style.display='none';$('specmsg').textContent='';buildPalette()}
+  closeSpec();buildPalette()}
 function switchTo(m){if(!MODES[m])return;B[MODE].view=view;MODE=m;S=B[m];view=S.view?{x:S.view.x,y:S.view.y,k:S.view.k}:{x:60,y:80,k:1};
   hist=[];sel=null;P=newP();moreOpen=false;nl.innerHTML='';els={};setModeUI()}
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.m===MODE)return;
