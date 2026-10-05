@@ -37,7 +37,8 @@ header .sp{flex:1}
 .tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;margin-right:6px}
 .tabs button{border:none;background:none;border-radius:9px;padding:5px 12px;font-weight:600;color:var(--sub)}
 .tabs button.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
-#specHint{font-size:12px;color:var(--sub);max-width:300px;line-height:1.3}
+#specHint{font-size:12px;color:var(--sub);max-width:260px;line-height:1.3}
+@media (max-width:1180px){#specHint{display:none}}
 main{flex:1;min-height:0;display:grid;grid-template-columns:196px minmax(0,1fr) 340px}
 aside{background:var(--panel);overflow:auto}
 #pal{border-right:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -158,10 +159,12 @@ details.more summary::-webkit-details-marker{display:none}
 .tbar i.on{opacity:1;background:var(--accent)}
 .prtext{white-space:pre-wrap;font-size:12px;color:var(--sub);margin-top:8px;line-height:1.5}
 .menuwrap{position:relative}
-#menu{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;gap:2px}
+#menu{position:absolute;top:calc(100% + 6px);right:0;z-index:30;min-width:240px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;gap:2px}
 #menu[hidden]{display:none}
 #menu button{border:none;text-align:left;background:none;border-radius:8px;padding:8px 10px}
 #menu button:hover{background:var(--bg)}
+#menu hr{border:none;border-top:1px solid var(--line);margin:4px 2px;width:calc(100% - 4px)}
+header .icon{padding:5px 10px;font-size:16px;line-height:1}
 #menu small{display:block;color:var(--sub);font-size:11px;line-height:1.3}
 #bEdit{display:none}
 body.view #bEdit{display:inline-block}
@@ -236,13 +239,16 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
     <button data-m="app">📱 앱</button><button data-m="image">🖼️ 이미지</button><button data-m="video">🎬 영상</button>
   </div>
   <div class="tabs editonly" id="subtabs"><button data-s="plan">📝 기획</button><button data-s="flow">🔗 화면 흐름</button></div>
-  <button id="bUndo" class="editonly" title="되돌리기 (Ctrl+Z)">되돌리기</button>
+  <span class="sp"></span>
+  <span id="specHint"></span>
+  <button id="bUndo" class="editonly icon" title="되돌리기 (Ctrl+Z)" aria-label="되돌리기">↶</button>
   <button id="bTour" class="editonly">따라 만들기</button>
-  <button id="bSample" class="editonly">예시 불러오기</button>
-  <button id="bClear" class="editonly">새로 시작</button>
   <div class="menuwrap editonly">
-    <button id="bShare" aria-haspopup="true">저장 · 공유 ▾</button>
+    <button id="bShare" class="icon" aria-haspopup="true" title="더보기" aria-label="더보기">⋯</button>
     <div id="menu" hidden>
+      <button id="bSample">✨ 예시 불러오기<small>완성된 예시로 구경해요</small></button>
+      <button id="bClear">🗑️ 새로 시작<small>지금 작업을 모두 지워요 (되돌리기 가능)</small></button>
+      <hr>
       <button id="mSave">📥 파일로 저장<small>내 컴퓨터에 .json 파일로 내려받아요</small></button>
       <button id="mLoad">📂 파일 불러오기<small>저장해 둔 파일을 열어요</small></button>
       <button id="mEditLink">🔗 편집 링크 복사<small>받은 사람이 고쳐 볼 수 있어요</small></button>
@@ -251,8 +257,6 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
   </div>
   <input type="file" id="fileIn" accept=".json,application/json" hidden>
   <button id="bEdit" class="btn-main">내 기획으로 가져와 고치기</button>
-  <span class="sp"></span>
-  <span id="specHint"></span>
   <button id="bSpec" class="btn-main">기획서 만들기</button>
 </header>
 <main>
@@ -386,7 +390,7 @@ ALLOW.v_scene=['v_scene','v_final'];ALLOW.v_text=['v_scene'];ALLOW.v_sound=['v_s
 ALLOW.idea=[];ALLOW.users=[];ALLOW.problem=[];ALLOW.must=[];ALLOW.nice=[];ALLOW.notnow=[];ALLOW.look=[];ALLOW.screen=['screen','save','ai'];ALLOW.input=['screen'];ALLOW.choice=['screen'];ALLOW.save=['result'];ALLOW.result=['screen'];ALLOW.ai=['screen'];
 
 var MODES={
-  app:{nm:'앱',order:['idea','users','problem','must','nice','notnow','look','screen','input','choice','save','result','ai'],ph:'눌러 보는 프로토타입',btn:'기획서 만들기',hint:'복사해서 Gemini나 Claude에 붙여넣어요',sample:'투표 앱 예시 불러오기'},
+  app:{nm:'앱',order:['idea','users','problem','must','nice','notnow','look','screen','input','choice','save','result','ai'],ph:'눌러 보는 프로토타입',btn:'기획서 만들기',hint:'복사해서 AI에게 붙여넣어요',sample:'투표 앱 예시 불러오기'},
   image:{nm:'이미지',order:['i_subject','i_style','i_scene','i_mood','i_ref','i_avoid','i_final'],ph:'이렇게 만들어져요 (미리보기)',btn:'기획서·프롬프트 만들기',hint:'복사한 글을 이미지 만드는 AI에 붙여넣어요',sample:'우리 반 포스터 예시 불러오기'},
   video:{nm:'영상',order:['v_scene','v_text','v_sound','v_avoid','v_final'],ph:'이렇게 만들어져요 (스토리보드)',btn:'기획서·프롬프트 만들기',hint:'복사한 글을 영상 만드는 AI에 붙여넣어요',sample:'30초 학교 홍보영상 예시 불러오기'}
 };
@@ -883,7 +887,7 @@ function specOpen(){return !$('specModal').hidden}
 function copyText(msg){var t=$('spec'),m=$('specmsg'),fb='글을 선택해서 복사해 주세요.';
   try{navigator.clipboard.writeText(t.value).then(function(){m.textContent=msg},function(){m.textContent=fb;t.select()})}catch(e){m.textContent=fb;t.select()}}
 var SPEC_OK='복사했어요. ';
-function specOkMsg(){return MODE==='app'?SPEC_OK+'Gemini나 Claude에 붙여넣으면 돼요.':SPEC_OK+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣으면 돼요.'}
+function specOkMsg(){return MODE==='app'?SPEC_OK+'AI에게 붙여넣으면 돼요.':SPEC_OK+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣으면 돼요.'}
 function showSpec(kind){specKind=kind;var t=$('spec');t.value=specText();
   $('specTitle').textContent=MODE==='app'?'앱 기획서':(kind==='pr'?(MODE==='image'?'이미지':'영상')+' 프롬프트':(MODE==='image'?'이미지':'영상')+' 기획서');
   $('specbar').style.display=MODE==='app'?'none':'flex';
@@ -964,7 +968,7 @@ function tourStart(){
 function tourEnd(done){
   if(!TOURS)return;TOURS.on=false;TOURS=null;clearInterval(tourTimer);
   $('tourSpot').hidden=true;$('tourPop').hidden=true;
-  if(done)toast(MODE==='app'?'🎉 따라 만들기 끝! 복사한 기획서를 Gemini나 Claude에 붙여넣어 보세요':'🎉 따라 만들기 끝! 복사한 프롬프트를 '+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣어 보세요')}
+  if(done)toast(MODE==='app'?'🎉 따라 만들기 끝! 복사한 기획서를 AI에게 붙여넣어 보세요':'🎉 따라 만들기 끝! 복사한 프롬프트를 '+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣어 보세요')}
 function tStepDone(i){var st=TSTEPS[i],c=st.done();
   if(!st.c)return c;
   if(!c){delete TOURS.ok[i];return false}
@@ -1104,6 +1108,7 @@ var menu=$('menu');
 function closeMenu(){menu.hidden=true}
 $('bShare').onclick=function(ev){ev.stopPropagation();menu.hidden=!menu.hidden};
 document.addEventListener('click',function(ev){if(!ev.target.closest('.menuwrap'))closeMenu()});
+$('menu').addEventListener('click',function(ev){if(ev.target.closest('button'))closeMenu()});
 $('mSave').onclick=function(){closeMenu();saveFile()};
 $('mLoad').onclick=function(){closeMenu();$('fileIn').click()};
 $('mEditLink').onclick=function(){closeMenu();copyLink('e')};
