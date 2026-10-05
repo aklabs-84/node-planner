@@ -812,7 +812,8 @@ var TOURS=null,tourTimer=null,tourKey=-1;
 function tFirst(t){return ofType(t)[0]}
 function tEdgeOf(fa,ta){return S.edges.filter(function(e){var a=nb(e.from),b=nb(e.to);return a&&b&&a.type===fa&&b.type===ta})}
 function tPal(t){return function(){return document.querySelector('.pitem[data-t="'+t+'"]')}}
-var TSTEPS=[
+var TSTEPS=[],TOURSET={};
+TOURSET.app=[
  {t:'💡 아이디어 카드 놓기',x:'왼쪽 보관함의 「앱 아이디어」 카드를 캔버스로 끌어다 놓아 보세요. (눌러도 돼요)',h:'카드를 마우스로 꾹 잡고 가운데 캔버스(점선 칸) 위에서 놓으면 돼요. 카드를 한 번 눌러도 생겨요.',el:tPal('idea'),done:function(){return ofType('idea').length>=1}},
  {t:'✍️ 내용 쓰기',c:1,x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 쓰세요. 다 썼으면 「다 썼어요」를 눌러요.',h:'오른쪽 「앱 이름」 칸을 눌러 지우고 내 앱 이름을 쓰면 돼요. 카드를 먼저 한 번 눌러야 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
  {t:'📱 화면 카드 놓기',x:'이번엔 「화면」 카드를 캔버스에 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'왼쪽 「화면」 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
@@ -823,15 +824,49 @@ var TSTEPS=[
  {t:'👆 눌러 보기',x:'오른쪽 폰에서 방금 만든 버튼을 눌러 보세요. 정말 앱처럼 움직여요!',el:function(){return $('proto')},done:function(){return !!TOURS.pc}},
  {t:'📋 기획서 만들기',x:'위쪽 「기획서 만들기」를 눌러 보세요. 만든 기획이 글로 정리돼요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}
 ];
+function tPut(t,title,x,n){return {t:title,x:x,h:'왼쪽 보관함의 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal(t),done:function(){return ofType(t).length>=n}}}
+function tLnk(fa,ta,title,x,i){return {t:title,x:x,h:'앞 카드 오른쪽 파란 동그라미를 마우스로 잡고, 뒤 카드 위까지 끌어서 놓아요.',el:function(){var n=ofType(fa)[i||0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf(fa,ta).length>=1}}}
+function tFil(title,x,typ,keys,c,i,h){return {t:title,x:x,c:c,h:h||'카드를 한 번 눌러 고르면 오른쪽에 칸이 나와요. 거기에 쓰거나 골라요.',el:function(){return $('insp')},done:function(){var n=ofType(typ)[i||0];return !!n&&keys.every(function(k){return !!fvt(n,k)})}}}
+function tDoc(x){return {t:'📋 기획서 열기',x:'위쪽 「'+MODES[MODE].btn+'」를 눌러 보세요.',h:'위쪽 가운데 큰 버튼이에요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}}
+function tPr(){return {t:'✨ 프롬프트 보기',x:'위쪽 「프롬프트만」 단추를 눌러 AI에게 바로 붙여넣을 글을 확인해요.',h:'창 위쪽 「프롬프트만」 단추를 누르면 돼요.',el:function(){return specOpen()?$('bCopyPr'):$('bSpec')},done:function(){return specOpen()&&specKind==='pr'}}}
+TOURSET.image=[
+ tPut('i_subject','🧒 주인공 카드 놓기','왼쪽 보관함의 「주인공」 카드를 캔버스에 놓아 보세요. 그림에 나올 대상이에요.',1),
+ tFil('✍️ 주인공 쓰기','주인공이 누구(무엇)인지 오른쪽에 쓰고 「다 썼어요」를 눌러요. (예: 교복 입은 초등학생 5명)','i_subject',['what'],1,0),
+ tPut('i_style','🎨 그림체 카드 놓기','이번엔 「그림체」 카드를 놓아 보세요. 사진처럼, 일러스트처럼 같은 그림 스타일이에요.',1),
+ tLnk('i_subject','i_style','🔗 카드 이어 주기','주인공 카드 오른쪽 동그라미를 잡고 그림체 카드까지 끌어서 이어 보세요.'),
+ tFil('🎨 그림체 고르기','그림체 카드를 눌러 보고, 오른쪽에서 그림체를 하나 골라요.','i_style',['style'],0,0),
+ tPut('i_scene','🏞️ 배경 카드 놓기','「배경·구도」 카드를 놓아 보세요. 어디에서 일어나는 장면인지 정해요.',1),
+ tLnk('i_style','i_scene','🔗 그림체 → 배경 이어 주기','그림체 카드의 동그라미를 잡고 배경 카드까지 끌어서 이어요.'),
+ tFil('✍️ 배경 쓰기','배경이 어디인지 쓰고 「다 썼어요」를 눌러요. (예: 햇살 가득한 교실)','i_scene',['bg'],1,0),
+ tPut('i_mood','🌈 색감 카드 놓기','「색감·분위기」 카드를 놓아 보세요. 그림의 전체 느낌이에요.',1),
+ tLnk('i_scene','i_mood','🔗 배경 → 색감 이어 주기','배경 카드의 동그라미를 잡고 색감 카드까지 끌어서 이어요.'),
+ tFil('🌈 색감 고르기','색감 카드를 눌러 보고, 주된 색감을 하나 골라요.','i_mood',['palette'],0,0),
+ tPut('i_final','✨ 완성 카드 놓기','마지막으로 「완성 프롬프트」 카드를 놓아요. 모든 카드가 여기로 모여요.',1),
+ tLnk('i_mood','i_final','🔗 색감 → 완성 이어 주기','색감 카드의 동그라미를 잡고 완성 카드까지 끌어서 이어요.'),
+ tFil('📐 비율 고르기','완성 카드를 눌러 보고, 그림 비율을 하나 골라요.','i_final',['ratio'],0,0),
+ tDoc(),tPr()];
+TOURSET.video=[
+ tPut('v_scene','🎬 첫 장면 놓기','왼쪽 보관함의 「장면」 카드를 놓아 보세요. 영상의 한 장면이에요.',1),
+ tFil('✍️ 첫 장면 쓰기','어디에서 무슨 일이 일어나는지 오른쪽에 쓰고 「다 썼어요」를 눌러요.','v_scene',['place','content'],1,0),
+ tFil('⏱️ 시간·카메라 고르기','이 장면을 몇 초 보여줄지, 카메라는 어떻게 움직일지 골라요.','v_scene',['sec','camera'],0,0),
+ tPut('v_scene','🎬 두 번째 장면 놓기','「장면」 카드를 하나 더 놓아 보세요.',2),
+ tLnk('v_scene','v_scene','🔗 장면 이어 주기','첫 장면 카드 오른쪽 동그라미를 잡고 두 번째 장면까지 끌어서 이어요. 순서대로 영상이 흘러가요.'),
+ {t:'🏷️ 장면 전환 이름',c:1,x:'방금 이은 선을 눌러 장면이 바뀌는 방법을 쓰고 「다 썼어요」를 눌러요. (예: 컷, 디졸브, 페이드)',h:'이은 선 가운데를 한 번 누르면 오른쪽에 칸이 나와요.',el:function(){return $('insp')},done:function(){return tEdgeOf('v_scene','v_scene').some(function(e){return !!(e.label||'').trim()})}},
+ tFil('✍️ 두 번째 장면 쓰기','두 번째 장면의 장소·내용·초·카메라를 모두 채우고 「다 썼어요」를 눌러요.','v_scene',['place','content','sec','camera'],1,1),
+ tPut('v_final','🎞️ 완성 카드 놓기','「영상 만들기 요청」 카드를 놓아요. 길이와 비율을 정하는 마무리 카드예요.',1),
+ tLnk('v_scene','v_final','🔗 마지막 장면 → 완성 이어 주기','두 번째 장면 카드의 동그라미를 잡고 완성 카드까지 끌어서 이어요.',1),
+ tFil('📐 길이·비율·스타일','완성 카드를 눌러 보고 전체 길이, 화면 비율, 영상 스타일을 모두 골라요.','v_final',['total','ratio','style'],0,0),
+ {t:'🧮 시간 맞추기',x:'장면들의 초를 모두 더한 값이 전체 길이와 같아야 해요. 장면의 초나 전체 길이를 바꿔서 맞춰 보세요.',h:'예: 5초 + 10초 장면이면 전체 길이를 15초로 골라요.',el:function(){return $('insp')},done:function(){var f=ofType('v_final')[0],t=f?parseInt(fv(f,'total'),10):0,sum=0;ofType('v_scene').forEach(function(n){sum+=parseInt(fv(n,'sec'),10)||0});return t>0&&sum===t}},
+ tDoc(),tPr()];
 function tourStart(){
-  if(MODE!=='app'||VIEW)return;
+  if(VIEW)return;TSTEPS=TOURSET[MODE];
   if(S.nodes.length){push();S.nodes=[];S.edges=[];sel=null;P=newP();refreshAll();inspector();toast('새 판에서 시작해요. 되돌리기로 이전 기획을 살릴 수 있어요')}
   TOURS={on:true,i:0,pc:false,ok:{}};tourKey=-1;
   clearInterval(tourTimer);tourTimer=setInterval(tourPlace,300);tourCheck()}
 function tourEnd(done){
   if(!TOURS)return;TOURS.on=false;TOURS=null;clearInterval(tourTimer);
   $('tourSpot').hidden=true;$('tourPop').hidden=true;
-  if(done)toast('🎉 따라 만들기 끝! 복사한 기획서를 Gemini나 Claude에 붙여넣어 보세요')}
+  if(done)toast(MODE==='app'?'🎉 따라 만들기 끝! 복사한 기획서를 Gemini나 Claude에 붙여넣어 보세요':'🎉 따라 만들기 끝! 복사한 프롬프트를 '+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣어 보세요')}
 function tStepDone(i){var st=TSTEPS[i],c=st.done();
   if(!st.c)return c;
   if(!c){delete TOURS.ok[i];return false}
@@ -904,8 +939,7 @@ $('bUndo').onclick=undo;
 function setModeUI(){var m=MODES[MODE];
   $('tabs').querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.m===MODE)});
   $('bSpec').textContent=m.btn;$('specHint').textContent=m.hint;$('bSample2').textContent=m.sample;$('protoh').textContent=m.ph;
-  closeSpec();buildPalette();if(MODE!=='app')tourEnd(false);
-  $('bTour').style.display=$('bTour2').style.display=MODE==='app'?'':'none'}
+  closeSpec();buildPalette();tourEnd(false)}
 function switchTo(m){if(!MODES[m])return;B[MODE].view=view;MODE=m;S=B[m];view=S.view?{x:S.view.x,y:S.view.y,k:S.view.k}:{x:60,y:80,k:1};
   hist=[];sel=null;P=newP();moreOpen=false;nl.innerHTML='';els={};setModeUI()}
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.m===MODE)return;
