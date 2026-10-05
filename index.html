@@ -130,6 +130,7 @@ details.more summary::-webkit-details-marker{display:none}
 .screen .grow{flex:1}
 .screen .bar{height:10px;border-radius:5px;background:var(--bg);margin-top:3px}
 .screen .bar i{display:block;height:10px;border-radius:5px;background:var(--accent)}
+.screen .cbox{border:1.5px dashed var(--data-fg);background:var(--data-bg);color:var(--data-fg);border-radius:12px;padding:10px;font-size:13px;line-height:1.5}
 .screen .aibox{background:var(--ai-bg);color:var(--ai-fg);border-radius:12px;padding:10px;font-size:13px}
 .screen .saved{background:var(--ok-bg);color:var(--ok);border-radius:10px;padding:6px 10px;font-size:12px}
 .screen .link{border:none;background:none;color:var(--mute);font-size:12px;padding:2px}
@@ -343,7 +344,8 @@ T('choice','app','inp','🗳️','선택지','하나를 고르기','q','입력',
 T('save','app','data','💾','저장','정보를 보관','what','데이터',[F('what','무엇을 저장할까요?','text','누가 어떤 메뉴를 골랐는지')]);
 T('result','app','res','📊','결과 보여주기','모은 정보 보기','title','결과',[F('title','제목','text','지금까지 결과'),F('src','무엇을 보여줄까요?','select','선택지 투표 결과',['선택지 투표 결과','입력한 글 모아보기','AI 답변']),F('show','보여주는 방식','select','막대그래프',['막대그래프','숫자만','글 목록','카드'])]);
 T('ai','app','ai','🤖','AI 도우미','AI가 답해 줘요','ask','AI',[F('ask','AI에게 무엇을 시킬까요?','text','오늘 메뉴를 추천해 줘')]);
-TYPES.input.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.choice.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.ai.note='화면 카드에 선을 이어야 그 화면 안에 나타나요. 미리보기에서는 실제 답 대신 예시 상자가 나와요.';TYPES.result.note='저장 카드 → 결과 카드 → 화면 카드 순서로 이어요. 선택지 투표, 입력한 글, AI 답변 중 하나를 골라 보여줘요.';TYPES.save.note='화면 카드에서 선을 이어요. 그 화면에 저장 버튼이 생기고, 눌러야 쓴 글이나 고른 선택지가 모여요. 이어서 결과 카드로 이어 보여줘요.';TYPES.screen.note='화면 한 장이에요. 입력 칸·선택지·AI·결과 카드를 이 화면으로 이어 붙여요.';
+T('custom','app','data','✏️','내 기능 카드','내가 직접 설명해요','name','내 기능',[F('name','기능 이름','text','',null,{ph:"예: 점수 계산"}),F('what','어떻게 동작해야 하나요?','area','',null,{ph:"예: 정답을 고르면 1점이 올라가고, 마지막 화면에서 합계를 보여줘요"}),F('look','화면에는 어떻게 보이나요?','text','',null,{more:1,ph:"예: 화면 위쪽에 큰 숫자로 점수"})]);
+TYPES.input.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.choice.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.ai.note='화면 카드에 선을 이어야 그 화면 안에 나타나요. 미리보기에서는 실제 답 대신 예시 상자가 나와요.';TYPES.result.note='저장 카드 → 결과 카드 → 화면 카드 순서로 이어요. 선택지 투표, 입력한 글, AI 답변 중 하나를 골라 보여줘요.';TYPES.save.note='화면 카드에서 선을 이어요. 그 화면에 저장 버튼이 생기고, 눌러야 쓴 글이나 고른 선택지가 모여요. 이어서 결과 카드로 이어 보여줘요.';TYPES.custom.note='위 카드로 표현하기 어려운 기능을 내 말로 적어요. 화면 카드에 선을 이으면 그 화면에 점선 상자로 보이고, 기획서에는 "이 기능을 만들어 주세요"로 들어가요. 미리보기에서는 실제로 동작하지 않아요.';TYPES.screen.note='화면 한 장이에요. 입력 칸·선택지·AI·결과 카드를 이 화면으로 이어 붙여요.';
 
 /* 이미지 */
 var RATIO_I=['1:1 정사각형','3:4 세로','4:3 가로','16:9 와이드','9:16 길쭉 세로'];
@@ -404,10 +406,10 @@ T('v_final','video','fin','🎞️','영상 만들기 요청','길이·비율 �
   F('purpose','어디에 쓸 영상인가요?','text','',null,{more:1,ph:'예: 학교 홍보, 수업 시간 발표'})]);
 ALLOW.v_scene=['v_scene','v_final'];ALLOW.v_text=['v_scene'];ALLOW.v_sound=['v_scene','v_final'];ALLOW.v_avoid=['v_final'];ALLOW.v_final=[];
 /* 앱 */
-ALLOW.idea=[];ALLOW.users=[];ALLOW.problem=[];ALLOW.must=[];ALLOW.nice=[];ALLOW.notnow=[];ALLOW.look=[];ALLOW.screen=['screen','save','ai'];ALLOW.input=['screen'];ALLOW.choice=['screen'];ALLOW.save=['result'];ALLOW.result=['screen'];ALLOW.ai=['screen'];
+ALLOW.idea=[];ALLOW.users=[];ALLOW.problem=[];ALLOW.must=[];ALLOW.nice=[];ALLOW.notnow=[];ALLOW.look=[];ALLOW.screen=['screen','save','ai'];ALLOW.input=['screen'];ALLOW.choice=['screen'];ALLOW.save=['result'];ALLOW.result=['screen'];ALLOW.ai=['screen'];ALLOW.custom=['screen'];
 
 var MODES={
-  app:{nm:'앱',order:['idea','users','problem','must','nice','notnow','look','screen','input','choice','save','result','ai'],ph:'눌러 보는 프로토타입',btn:'기획서 만들기',hint:'복사해서 AI에게 붙여넣어요',sample:'투표 앱 예시 불러오기'},
+  app:{nm:'앱',order:['idea','users','problem','must','nice','notnow','look','screen','input','choice','save','result','ai','custom'],ph:'눌러 보는 프로토타입',btn:'기획서 만들기',hint:'복사해서 AI에게 붙여넣어요',sample:'투표 앱 예시 불러오기'},
   image:{nm:'이미지',order:['i_subject','i_style','i_scene','i_mood','i_ref','i_avoid','i_final'],ph:'이렇게 만들어져요 (미리보기)',btn:'기획서·프롬프트 만들기',hint:'복사한 글을 이미지 만드는 AI에 붙여넣어요',sample:'우리 반 포스터 예시 불러오기'},
   video:{nm:'영상',order:['v_scene','v_text','v_sound','v_avoid','v_final'],ph:'이렇게 만들어져요 (스토리보드)',btn:'기획서·프롬프트 만들기',hint:'복사한 글을 영상 만드는 AI에 붙여넣어요',sample:'30초 학교 홍보영상 예시 불러오기'}
 };
@@ -590,7 +592,7 @@ window.addEventListener('keydown',function(e){
 function buildPalette(){var h='<h2>카드 보관함</h2>';
   function item(k){var t=TYPES[k];return '<div class="pitem" data-t="'+k+'" data-c="'+t.c+'"><div class="ico">'+t.ic+'</div><div><b>'+t.nm+'</b><span class="d">'+t.d+'</span></div></div>'}
   if(MODE==='app'){
-    h+='<div class="pgrp">📱 화면 · 앱 화면 한 장</div>'+item('screen')+'<div class="pgrp">🧩 화면 안에 넣는 부품 · 부품에서 화면으로 선을 이어요</div>'+['input','choice','ai','result'].map(item).join('')+'<div class="pgrp">💾 저장 · 화면에서 저장으로, 저장에서 결과로</div>'+item('save')}
+    h+='<div class="pgrp">📱 화면 · 앱 화면 한 장</div>'+item('screen')+'<div class="pgrp">🧩 화면 안에 넣는 부품 · 부품에서 화면으로 선을 이어요</div>'+['input','choice','ai','result','custom'].map(item).join('')+'<div class="pgrp">💾 저장 · 화면에서 저장으로, 저장에서 결과로</div>'+item('save')}
   else MODES[MODE].order.forEach(function(k){var t=TYPES[k];h+=item(k)});
   if(MODE==='app')h+='<div class="pref" id="pref"></div>';
   $('pal').innerHTML=h;refPal()}
@@ -633,7 +635,7 @@ function inspector(focusLabel){var box=$('insp');
     var open=moreOpen||moreFilled;
     h+=main+(more?'<details class="more"'+(open?' open':'')+'><summary>'+(open?'더 자세히 ▴':'더 자세히 ▾')+'</summary>'+more+'</details>':'');
     var outs=S.edges.filter(function(e){return e.from===n.id}).length,ins=S.edges.filter(function(e){return e.to===n.id}).length;
-    h+='<div class="note">이어진 선: 들어오는 '+ins+'개, 나가는 '+outs+'개'+(t.note?'<br>'+esc(t.note):'')+((MODE==='app'&&(n.type==='input'||n.type==='choice'||n.type==='ai')&&!outs)?'<br>⚠️ 아직 화면에 이어지지 않았어요. 이 카드의 오른쪽 ● 점을 화면 카드로 끌어 이어 주세요':'')+'</div></div>';box.innerHTML=h;
+    h+='<div class="note">이어진 선: 들어오는 '+ins+'개, 나가는 '+outs+'개'+(t.note?'<br>'+esc(t.note):'')+((MODE==='app'&&(n.type==='input'||n.type==='choice'||n.type==='ai'||n.type==='custom')&&!outs)?'<br>⚠️ 아직 화면에 이어지지 않았어요. 이 카드의 오른쪽 ● 점을 화면 카드로 끌어 이어 주세요':'')+'</div></div>';box.innerHTML=h;
     box.querySelectorAll('[data-k]').forEach(function(x){x.addEventListener('input',function(){if(!editing){push();editing=true}n.f[x.dataset.k]=x.value;P.picks={};refreshAll()});x.addEventListener('blur',function(){editing=false})});
     box.querySelectorAll('.pks').forEach(function(g){g.addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;
       var key=g.dataset.for,inp=box.querySelector('[data-k="'+key+'"]'),was=b.classList.contains('on');
@@ -675,6 +677,7 @@ function protoApp(box){var st=startScreen();
     if(f.type==='choice'){h+='<div><div style="font-size:15px;font-weight:600;margin-bottom:6px">'+esc(fv(f,'q'))+'</div>';
       optsOf(f).forEach(function(o,i){h+='<button class="opt'+(P.picks[f.id]===i?' on':'')+'" data-ch="'+f.id+'" data-i="'+i+'">'+esc(o)+'</button>'});h+='</div>'}
     if(f.type==='ai')h+='<div class="aibox">🤖 AI 답변 자리<br><span style="font-size:12px">「'+esc(fv(f,'ask'))+'」에 대한 답이 여기에 나와요 (예시 화면이에요)</span></div>';
+    if(f.type==='custom')h+='<div class="cbox"><b>✏️ '+esc(fv(f,'name')||'내 기능')+'</b>'+(fv(f,'look')?'<br>'+esc(fv(f,'look')):'')+'<br><span style="font-size:12px">(내가 설명한 기능 자리예요. 미리보기에서는 동작하지 않아요)</span></div>';
     if(f.type==='result'){var src=fv(f,'src')||'선택지 투표 결과',show=fv(f,'show'),ch=firstOf('choice');h+='<div><div style="font-size:15px;font-weight:600;margin-bottom:6px">'+esc(fv(f,'title'))+'</div>';
       if(src==='입력한 글 모아보기'){
         if(!P.entries.length)h+='<div class="chip">아직 저장된 글이 없어요. 앞 화면에서 글을 쓰고 저장해 보세요</div>';
@@ -918,6 +921,7 @@ function specApp(){var idea=firstOf('idea'),us=firstOf('users'),L=[];
       if(f.type==='input')L.push('   입력 칸: '+fv(f,'label')+' (예: '+fv(f,'ph')+')');
       if(f.type==='choice')L.push('   선택지: '+fv(f,'q')+' ['+optsOf(f).join(', ')+'] (하나 골라야 다음으로 갈 수 있어요)');
       if(f.type==='ai')L.push('   AI 답변 영역: '+fv(f,'ask'));
+      if(f.type==='custom')L.push('   ★ 직접 설명한 기능 "'+(fv(f,'name')||'이름 없음')+'": '+(fv(f,'what')||'(설명 없음)')+(fv(f,'look')?' / 화면 모습: '+fv(f,'look'):'')+' -> 이 기능을 실제로 동작하게 만들어 주세요');
       if(f.type==='result')L.push('   결과 보여주기: '+fv(f,'title')+' - '+(fv(f,'src')||'선택지 투표 결과')+'를 '+fv(f,'show')+'(으)로 표시')});
     S.edges.filter(function(e){return e.from===sc.id}).forEach(function(e){var t=nb(e.to);if(!t)return;
       if(t.type==='screen')L.push('   버튼 "'+(e.label||'다음')+'" 누르면 → '+fv(t,'name')+' 으로 이동');
