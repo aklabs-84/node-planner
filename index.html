@@ -209,6 +209,7 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
 .psec .hd span.dd{font-size:12px;color:var(--sub)}
 .psec label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 .pnext{text-align:center;padding-top:6px}
+.screen .sv{border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);border-radius:12px;padding:10px;font-weight:700;font-size:15px}
 .eline{font-size:13px;border-bottom:1px solid var(--line);padding:6px 2px}
 .ecard{font-size:13px;background:var(--cbg);border-radius:10px;padding:8px 10px;margin-bottom:6px}
 .el{font-size:11px;color:var(--sub);margin-right:4px}
@@ -342,7 +343,7 @@ T('choice','app','inp','🗳️','선택지','하나를 고르기','q','입력',
 T('save','app','data','💾','저장','정보를 보관','what','데이터',[F('what','무엇을 저장할까요?','text','누가 어떤 메뉴를 골랐는지')]);
 T('result','app','res','📊','결과 보여주기','모은 정보 보기','title','결과',[F('title','제목','text','지금까지 결과'),F('src','무엇을 보여줄까요?','select','선택지 투표 결과',['선택지 투표 결과','입력한 글 모아보기','AI 답변']),F('show','보여주는 방식','select','막대그래프',['막대그래프','숫자만','글 목록','카드'])]);
 T('ai','app','ai','🤖','AI 도우미','AI가 답해 줘요','ask','AI',[F('ask','AI에게 무엇을 시킬까요?','text','오늘 메뉴를 추천해 줘')]);
-TYPES.input.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.choice.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.ai.note='화면 카드에 선을 이어야 그 화면 안에 나타나요. 미리보기에서는 실제 답 대신 예시 상자가 나와요.';TYPES.result.note='저장 카드 → 결과 카드 → 화면 카드 순서로 이어요. 선택지 투표, 입력한 글, AI 답변 중 하나를 골라 보여줘요.';TYPES.save.note='화면 카드에서 선을 이어 와요. 그 화면에서 쓴 글이나 고른 선택지를 모아요.';TYPES.screen.note='화면 한 장이에요. 입력 칸·선택지·AI·결과 카드를 이 화면으로 이어 붙여요.';
+TYPES.input.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.choice.note='화면 카드에 선을 이어야 그 화면 안에 나타나요.';TYPES.ai.note='화면 카드에 선을 이어야 그 화면 안에 나타나요. 미리보기에서는 실제 답 대신 예시 상자가 나와요.';TYPES.result.note='저장 카드 → 결과 카드 → 화면 카드 순서로 이어요. 선택지 투표, 입력한 글, AI 답변 중 하나를 골라 보여줘요.';TYPES.save.note='화면 카드에서 선을 이어요. 그 화면에 저장 버튼이 생기고, 눌러야 쓴 글이나 고른 선택지가 모여요. 이어서 결과 카드로 이어 보여줘요.';TYPES.screen.note='화면 한 장이에요. 입력 칸·선택지·AI·결과 카드를 이 화면으로 이어 붙여요.';
 
 /* 이미지 */
 var RATIO_I=['1:1 정사각형','3:4 세로','4:3 가로','16:9 와이드','9:16 길쭉 세로'];
@@ -640,9 +641,9 @@ function inspector(focusLabel){var box=$('insp');
       var inp0=box.querySelector('[data-k="'+g.dataset.for+'"]');inp0.addEventListener('input',function(){setPks(box,g.dataset.for,inp0.value)})});
     var det=box.querySelector('details.more');if(det)det.addEventListener('toggle',function(){moreOpen=det.open;det.querySelector('summary').textContent=det.open?'더 자세히 ▴':'더 자세히 ▾'});
   } else {var e=eb(sel.id);if(!e){box.innerHTML='';return}var a=nb(e.from),b=nb(e.to),k=ekind(a,b);
-    var lab=k==='s2s'?'이 화면에서 다음 화면으로 가는 버튼에 쓸 글자':k==='trans'?'이 장면이 끝나고 다음 장면으로 바뀔 때 효과':'선에 붙일 이름';
-    var ph=k==='s2s'?'예: 투표하러 가기':k==='trans'?'예: 페이드':'예: 투표하면';
-    var note=k==='s2s'?'폰 화면에서 이 글자가 버튼이 돼요.':k==='trans'?'컷=바로 바뀜 · 페이드=서서히 어두워졌다 밝아짐 · 디졸브=겹치면서 바뀜. 비워 두면 컷으로 해요.':'어떤 때에 이어지는 선인지 적어 두면 기획서에 들어가요.';
+    var lab=k==='s2s'?'이 화면에서 다음 화면으로 가는 버튼에 쓸 글자':k==='trans'?'이 장면이 끝나고 다음 장면으로 바뀔 때 효과':b.type==='save'?'화면에 생길 저장 버튼에 쓸 글자':'선에 붙일 이름';
+    var ph=k==='s2s'?'예: 투표하러 가기':k==='trans'?'예: 페이드':b.type==='save'?'예: 투표하기':'예: 투표하면';
+    var note=k==='s2s'?'폰 화면에서 이 글자가 버튼이 돼요.':k==='trans'?'컷=바로 바뀜 · 페이드=서서히 어두워졌다 밝아짐 · 디졸브=겹치면서 바뀜. 비워 두면 컷으로 해요.':b.type==='save'?'화면에 이 글자의 저장 버튼이 생겨요. 눌러야 저장돼요. 비워 두면 「저장하기」예요.':'어떤 때에 이어지는 선인지 적어 두면 기획서에 들어가요.';
     box.innerHTML='<div class="card" data-c="screen"><div class="hd"><b>선</b><span class="tag">'+TYPES[a.type].nm+' → '+TYPES[b.type].nm+'</span><span class="sp"></span><button class="btn-del" id="del">삭제</button></div>'+
       '<label for="el">'+lab+'</label><input id="el" value="'+esc(e.label)+'" placeholder="'+ph+'">'+
       (k==='trans'?'<div class="pks" id="tpk">'+['컷','페이드','디졸브'].map(function(o){return '<button type="button" class="'+(o===e.label?'on':'')+'" data-v="'+o+'">'+o+'</button>'}).join('')+'</div>':'')+
@@ -687,7 +688,7 @@ function protoApp(box){var st=startScreen();
       h+='</div>'}});
   var notes='';
   outE.forEach(function(e){var t=nb(e.to);if(!t)return;
-    if(t.type==='save')notes+='<div class="chip">💾 '+esc(e.label||'버튼을 누르면')+' → 저장: '+esc(fv(t,'what'))+'</div>';
+    if(t.type==='save')notes+='<button class="sv" data-sv="'+e.id+'">💾 '+esc(e.label||'저장하기')+'</button>';
     if(t.type==='ai')notes+='<div class="chip">🤖 '+esc(e.label||'이 화면에서')+' → AI에게 시켜요: '+esc(fv(t,'ask'))+'</div>'});
   h+=notes+'<div class="grow"></div>';
   if(P.saved){h+='<div class="saved">💾 저장했어요</div>';P.saved=0}
@@ -699,14 +700,17 @@ function protoApp(box){var st=startScreen();
   h+='</div>';box.innerHTML='<div class="phone">'+h+'</div>';
   box.querySelectorAll('[data-in]').forEach(function(i){i.oninput=function(){P.vals[i.dataset.in]=i.value}});
   box.querySelectorAll('[data-ch]').forEach(function(b){b.onclick=function(){P.picks[b.dataset.ch]=+b.dataset.i;P.err=0;proto()}});
+  box.querySelectorAll('[data-sv]').forEach(function(b){b.onclick=function(){
+    var chs=inE.map(function(x){return nb(x.from)}).filter(function(f){return f&&f.type==='choice'}),ins=inE.map(function(x){return nb(x.from)}).filter(function(f){return f&&f.type==='input'});
+    if(chs.some(function(c){return P.picks[c.id]==null})){P.err=1;proto();return}
+    chs.forEach(function(c){var ex=P.extra[c.id]=P.extra[c.id]||[];ex[P.picks[c.id]]=(ex[P.picks[c.id]]||0)+1;delete P.picks[c.id]});
+    var en=ins.map(function(f){return {l:fv(f,'label'),v:(P.vals[f.id]||'').trim()}}).filter(function(x){return x.v});
+    if(en.length)P.entries.push(en);ins.forEach(function(f){delete P.vals[f.id]});
+    P.saved=1;P.err=0;proto()}});
   box.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){var e=eb(b.dataset.go);if(!e)return;
     var chs=inE.map(function(x){return nb(x.from)}).filter(function(f){return f&&f.type==='choice'});
-    if(chs.some(function(c){return P.picks[c.id]==null})){P.err=1;proto();return}
-    var saves=outE.some(function(x){var t=nb(x.to);return t&&t.type==='save'});
-    var ins=inE.map(function(x){return nb(x.from)}).filter(function(f){return f&&f.type==='input'});
-    if(saves&&chs.length){chs.forEach(function(c){var ex=P.extra[c.id]=P.extra[c.id]||[];ex[P.picks[c.id]]=(ex[P.picks[c.id]]||0)+1;delete P.picks[c.id]});P.saved=1}
-    if(saves&&ins.length){var en=ins.map(function(f){return {l:fv(f,'label'),v:(P.vals[f.id]||'').trim()}}).filter(function(x){return x.v});
-      if(en.length){P.entries.push(en);P.saved=1}ins.forEach(function(f){delete P.vals[f.id]})}
+    var hasSave=outE.some(function(x){var t=nb(x.to);return t&&t.type==='save'});
+    if(!hasSave&&chs.some(function(c){return P.picks[c.id]==null})){P.err=1;proto();return}
     P.hist.push(cur.id);P.cur=e.to;P.err=0;proto()}});
   var hm=box.querySelector('[data-home]');if(hm)hm.onclick=function(){P.cur=null;P.hist=[];P.err=0;proto()};
   syncNodes()}
@@ -917,7 +921,7 @@ function specApp(){var idea=firstOf('idea'),us=firstOf('users'),L=[];
       if(f.type==='result')L.push('   결과 보여주기: '+fv(f,'title')+' - '+(fv(f,'src')||'선택지 투표 결과')+'를 '+fv(f,'show')+'(으)로 표시')});
     S.edges.filter(function(e){return e.from===sc.id}).forEach(function(e){var t=nb(e.to);if(!t)return;
       if(t.type==='screen')L.push('   버튼 "'+(e.label||'다음')+'" 누르면 → '+fv(t,'name')+' 으로 이동');
-      if(t.type==='save')L.push('   '+(e.label||'버튼을 누르면')+' 저장: '+fv(t,'what'));
+      if(t.type==='save')L.push('   저장 버튼 "'+(e.label||'저장하기')+'" 누르면 저장: '+fv(t,'what'));
       if(t.type==='ai')L.push('   '+(e.label||'이 화면에서')+' AI에게 시키기: '+fv(t,'ask'))})});
   L.push('');L.push('[요청] 위 기획대로 모바일 화면에 맞는 웹앱을 만들어 주세요.'+(pf('notnow','items')?' "이번엔 만들지 않을 것"은 넣지 마세요.':'')+' 코딩 전에 화면 구성을 먼저 설명해 주세요.');
   return L.join('\n')}
@@ -1059,7 +1063,7 @@ function sampleApp(N,E){
   var st=N('screen',40,110,{name:'시작 화면',heading:'우리 반 점심 투표',body:'오늘 점심을 같이 정해 봐요!'}),
     ch=N('choice',320,275,{}),vo=N('screen',320,110,{name:'투표 화면',heading:'투표해요',body:''}),sv=N('save',600,275,{}),rs=N('result',880,275,{}),
     rsc=N('screen',600,110,{name:'결과 화면',heading:'투표 끝!',body:'친구들 결과를 확인해 보세요.'});
-  E(st,vo,'투표하러 가기');E(ch,vo);E(vo,sv,'투표하면');E(vo,rsc,'투표 완료');E(sv,rs);E(rs,rsc)}
+  E(st,vo,'투표하러 가기');E(ch,vo);E(vo,sv,'투표하기');E(vo,rsc,'투표 완료');E(sv,rs);E(rs,rsc)}
 function sampleImage(N,E){
   var su=N('i_subject',40,100,{what:'교복을 입은 초등학생 5명',action:'두 팔을 번쩍 들고 환하게 웃어요',look:'서로 어깨동무를 하고 있어요'}),
     sy=N('i_style',310,100,{style:'일러스트',detail:'선이 굵고 귀여운 포스터 그림'}),
