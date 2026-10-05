@@ -192,6 +192,30 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
 #tourPop .tb button{font-size:12px;padding:5px 10px}
 #tourPop .tb button:disabled{opacity:.4;cursor:not-allowed}
 #tourPop[hidden],#tourSpot[hidden]{display:none}
+[hidden]{display:none!important}
+body.sub-plan main{grid-template-columns:minmax(0,1fr)}
+body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
+#planv{position:absolute;inset:0;overflow:auto;padding:20px 16px 40px}
+.plan{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.plan h2{margin:0;font-size:20px}
+.plan .pd{margin:0 0 4px;color:var(--sub);font-size:14px}
+.psec{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow)}
+.psec .hd{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.psec .hd .ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--cbg)}
+.psec .hd b{display:block;font-size:15px;line-height:1.2}
+.psec .hd span.dd{font-size:12px;color:var(--sub)}
+.psec label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
+.pnext{text-align:center;padding-top:6px}
+#runModal{position:fixed;inset:0;z-index:55;background:rgba(20,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+#runBox{width:min(460px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:10px;background:var(--panel);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:14px}
+#runHead{display:flex;align-items:center;gap:8px}
+#runHead b{flex:1;text-align:center;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#runHead button:disabled{opacity:.4;cursor:not-allowed}
+#runBig{overflow:auto;flex:1;min-height:0}
+#runBig .phone{width:min(380px,100%)}
+#runBig .screen{min-height:min(600px,calc(100vh - 190px))}
+#runBig .screen h3{font-size:22px}
+#runBig .screen p{font-size:15px}
 @media (max-width:700px){#tourPop{left:10px!important;right:10px;bottom:10px;top:auto!important;width:auto}}
 @media (max-width:1100px){main{grid-template-columns:176px minmax(0,1fr) 300px}}
 @media (max-width:900px){
@@ -211,6 +235,7 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
   <div class="tabs editonly" id="tabs">
     <button data-m="app">📱 앱</button><button data-m="image">🖼️ 이미지</button><button data-m="video">🎬 영상</button>
   </div>
+  <div class="tabs editonly" id="subtabs"><button data-s="plan">📝 기획</button><button data-s="flow">🔗 화면 흐름</button></div>
   <button id="bUndo" class="editonly" title="되돌리기 (Ctrl+Z)">되돌리기</button>
   <button id="bTour" class="editonly">따라 만들기</button>
   <button id="bSample" class="editonly">예시 불러오기</button>
@@ -233,6 +258,7 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
 <main>
   <aside id="pal"></aside>
   <section id="stage">
+    <div id="planv" hidden></div>
     <div id="cv">
       <div id="world"><svg id="svg"><g id="eg"></g><g id="tg"></g></svg><div id="nl"></div><div id="ll"></div></div>
       <div id="hint"></div>
@@ -247,7 +273,7 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
   </section>
   <aside id="side">
     <div id="inspwrap"><h2>카드 · 선 고치기</h2><div id="insp"></div></div>
-    <div><h2 id="protoh">눌러 보는 프로토타입</h2><div id="proto"></div></div>
+    <div><h2 id="protoh">눌러 보는 프로토타입</h2><button id="bRun" class="btn-main" style="width:100%;margin-bottom:8px" hidden>▶ 프로토타입 실행 (크게 보기)</button><div id="proto"></div></div>
     <div>
       <div id="clBox" class="card" hidden>
         <b style="font-size:13px">🏫 클래스로그AI 수업</b>
@@ -258,6 +284,9 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
     </div>
   </aside>
 </main>
+<div id="runModal" hidden role="dialog" aria-modal="true" aria-label="프로토타입 실행">
+  <div id="runBox"><div id="runHead"><button id="runBack">← 이전</button><b id="runName"></b><button id="runHome">⟲ 처음으로</button><button id="runX" aria-label="닫기">✕</button></div><div id="runBig"></div></div>
+</div>
 <div id="tourSpot" hidden></div><div id="tourPop" hidden role="dialog" aria-live="polite"></div>
 <div id="specModal" hidden role="dialog" aria-modal="true" aria-labelledby="specTitle">
   <div id="specBox">
@@ -368,8 +397,10 @@ function hasIn(t){return MODES[TYPES[t].m].order.some(function(k){return ALLOW[k
 function newB(){return {nodes:[],edges:[],seq:0,view:null}}
 var B={app:newB(),image:newB(),video:newB()},MODE='app',S=B.app;
 var view={x:60,y:80,k:1},sel=null,hist=[],P=newP();
-function newP(){return {cur:null,picks:{},extra:{},err:0,saved:0}}
-var VIEW=false;
+function newP(){return {hist:[],cur:null,picks:{},extra:{},err:0,saved:0}}
+var VIEW=false,SUB='plan';
+function isPlan(n){var t=TYPES[n.type];return t.m==='app'&&t.c==='plan'}
+function vnodes(){return S.nodes.filter(function(n){return !isPlan(n)})}
 var els={},drag=null,ptrs={},saveT=null,toastT=null;
 var $=function(i){return document.getElementById(i)};
 var cv=$('cv'),world=$('world'),eg=$('eg'),tg=$('tg'),nl=$('nl'),ll=$('ll');
@@ -415,14 +446,16 @@ function ekind(a,b){if(a.type==='screen'&&b.type==='screen')return 's2s';if(a.ty
 function addNode(type,x,y){push();var n={id:'n'+(++S.seq),type:type,x:Math.round(x),y:Math.round(y),f:{}};
   TYPES[type].f.forEach(function(f){n.f[f.k]=f.d});
   if(type==='screen')n.f.name='화면 '+(S.nodes.filter(function(q){return q.type==='screen'}).length+1);
+  if(type==='screen'||type==='v_scene'){P.cur=n.id;P.hist=[]}
   S.nodes.push(n);sel={kind:'node',id:n.id};refreshAll();inspector();return n}
 function addEdge(a,b){push();var e={id:'e'+(++S.seq),from:a,to:b,label:''};S.edges.push(e);sel={kind:'edge',id:e.id};refreshAll();inspector(true)}
 function removeSel(){if(!sel)return;push();
   if(sel.kind==='node'){S.nodes=S.nodes.filter(function(n){return n.id!==sel.id});S.edges=S.edges.filter(function(e){return e.from!==sel.id&&e.to!==sel.id})}
   else S.edges=S.edges.filter(function(e){return e.id!==sel.id});
   sel=null;refreshAll();inspector()}
-var wasIdea=false;
-function setSel(s){sel=s;syncNodes();drawEdges();hint();inspector();if(ideaSel()!==wasIdea){wasIdea=ideaSel();proto()}}
+function setSel(s){sel=s;var n=s&&s.kind==='node'?nb(s.id):null,jump=!!n&&(n.type==='screen'||n.type==='v_scene')&&P.cur!==n.id;
+  if(jump){P.cur=n.id;P.err=0;P.hist=[]}
+  syncNodes();drawEdges();hint();inspector();if(jump)proto()}
 
 /* ---------- 화면 이동 · 확대 ---------- */
 function applyView(){world.style.transform='translate('+view.x+'px,'+view.y+'px) scale('+view.k+')';
@@ -430,8 +463,8 @@ function applyView(){world.style.transform='translate('+view.x+'px,'+view.y+'px)
 function toWorld(cx,cy){var r=cv.getBoundingClientRect();return {x:(cx-r.left-view.x)/view.k,y:(cy-r.top-view.y)/view.k}}
 function zoomAt(cx,cy,f){var r=cv.getBoundingClientRect(),k=Math.max(.3,Math.min(1.6,view.k*f)),px=cx-r.left,py=cy-r.top;
   view.x=px-(px-view.x)*(k/view.k);view.y=py-(py-view.y)*(k/view.k);view.k=k;applyView()}
-function fit(){var r=cv.getBoundingClientRect();if(!S.nodes.length){view={x:60,y:80,k:1};applyView();return}
-  var x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;S.nodes.forEach(function(n){x1=Math.min(x1,n.x);y1=Math.min(y1,n.y);x2=Math.max(x2,n.x+W);y2=Math.max(y2,n.y+H)});
+function fit(){var r=cv.getBoundingClientRect(),vn=vnodes();if(!vn.length||!r.width){view=vn.length?view:{x:60,y:80,k:1};applyView();return}
+  var x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;vn.forEach(function(n){x1=Math.min(x1,n.x);y1=Math.min(y1,n.y);x2=Math.max(x2,n.x+W);y2=Math.max(y2,n.y+H)});
   var k=Math.max(.3,Math.min(1.1,Math.min((r.width-80)/(x2-x1),(r.height-120)/(y2-y1))));
   view.k=k;view.x=(r.width-(x2-x1)*k)/2-x1*k;view.y=(r.height-(y2-y1)*k)/2-y1*k+16;applyView()}
 function centerWorld(){var r=cv.getBoundingClientRect();return toWorld(r.left+r.width/2,r.top+r.height/2)}
@@ -441,7 +474,7 @@ function makeNode(n){var t=TYPES[n.type],el=document.createElement('div');el.cla
   el.innerHTML='<div class="ico">'+t.ic+'</div><div class="tx"><b>'+t.nm+'</b><span class="sm"></span></div>'+(hasIn(n.type)?'<i class="port in"></i>':'')+(hasOut(n.type)?'<i class="port out"></i>':'');
   nl.appendChild(el);els[n.id]=el;return el}
 function syncNodes(){
-  var ids={};S.nodes.forEach(function(n){ids[n.id]=1;var el=els[n.id]||makeNode(n);
+  var ids={};S.nodes.forEach(function(n){if(isPlan(n))return;ids[n.id]=1;var el=els[n.id]||makeNode(n);
     el.style.left=n.x+'px';el.style.top=n.y+'px';el.querySelector('.sm').textContent=fv(n,TYPES[n.type].sum)||'(비어 있어요)';
     el.classList.toggle('sel',!!sel&&sel.kind==='node'&&sel.id===n.id);el.classList.toggle('active',n.id===P.cur)});
   Object.keys(els).forEach(function(id){if(!ids[id]){els[id].remove();delete els[id]}});
@@ -458,17 +491,16 @@ function drawEdges(){var h='',l='';
 function hint(){var t;
   if(VIEW)t=MODE==='app'?'둘러보는 중이에요. 화면 카드나 오른쪽 폰을 눌러 보세요':MODE==='video'?'둘러보는 중이에요. 장면 카드나 오른쪽 스토리보드를 눌러 보세요':'둘러보는 중이에요. 오른쪽 점검표와 프롬프트를 확인해 보세요';
   else if(sel&&sel.kind==='edge')t='선 옆의 ✕를 누르면 선이 끊어져요 (Delete 키도 돼요)';
-  else if(!S.nodes.length)t='왼쪽에서 카드를 끌어다 놓아 보세요 (눌러도 돼요)';
-  else if(MODE==='app'&&!S.nodes.some(function(n){return TYPES[n.type].c!=='plan'}))t='기획 카드는 놓아서 적기만 해도 돼요. 이제 「화면」 카드를 놓아 보세요'
+  else if(!vnodes().length)t=MODE==='app'?'왼쪽 「화면」 카드를 놓아 보세요 (눌러도 돼요). 기획 내용은 「📝 기획」 탭에 있어요':'왼쪽에서 카드를 끌어다 놓아 보세요 (눌러도 돼요)';
   else if(!S.edges.length)t='카드 오른쪽 동그라미를 잡고, 다른 카드로 끌어서 이어 보세요';
   else if(MODE==='app'){
     if(S.edges.some(function(e){var a=nb(e.from),b=nb(e.to);return a&&b&&a.type==='screen'&&b.type==='screen'&&!e.label}))t='화면 사이 선을 눌러 버튼 이름을 붙여 보세요';
-    else t='좋아요! 오른쪽 폰에서 눌러 보고, 기획서 만들기도 해 보세요'}
+    else t='좋아요! 「▶ 프로토타입 실행」으로 눌러 보고, 기획서 만들기도 해 보세요'}
   else{var q=MODE==='image'?qImage(imgData()):qVideo(vidData()),miss=q.filter(function(i){return !i.ok&&!i.opt}).length;
     if(miss)t='오른쪽 점검표의 ⚠️ 부분을 채우면 프롬프트가 더 구체적이 돼요 ('+miss+'곳)';
     else t='좋아요! 점검을 모두 통과했어요. 위쪽 버튼으로 프롬프트를 복사해 AI에 붙여넣어 보세요'}
-  $('hint').textContent=t;$('empty').style.display=S.nodes.length?'none':'block'}
-function refreshAll(){syncNodes();drawEdges();hint();proto();applyView();if(specOpen())$('spec').value=specText();tourCheck()}
+  $('hint').textContent=t;$('empty').style.display=vnodes().length?'none':'block'}
+function refreshAll(){syncNodes();drawEdges();hint();proto();applyView();if(MODE==='app'&&SUB==='plan')renderPlan();if(specOpen())$('spec').value=specText();tourCheck()}
 
 /* ---------- 마우스 · 터치 ---------- */
 function startPan(e){drag={t:'pan',sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y};cv.classList.add('panning')}
@@ -488,7 +520,7 @@ cv.addEventListener('pointerdown',function(e){
   ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
   if(Object.keys(ptrs).length===2){var ks=Object.keys(ptrs),a=ptrs[ks[0]],b=ptrs[ks[1]],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
     drag={t:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y)||1,k0:view.k,wp:toWorld(mx,my)};cv.classList.remove('panning');return}
-  if(sel){sel=null;syncNodes();drawEdges();hint();inspector();if(wasIdea){wasIdea=false;proto()}}
+  if(sel){sel=null;syncNodes();drawEdges();hint();inspector()}
   startPan(e)});
 window.addEventListener('pointermove',function(e){
   if(ptrs[e.pointerId]){ptrs[e.pointerId]={x:e.clientX,y:e.clientY}}
@@ -535,8 +567,8 @@ window.addEventListener('keydown',function(e){
 
 /* ---------- 카드 보관함 ---------- */
 function buildPalette(){var h='<h2>카드 보관함</h2>';
-  MODES[MODE].order.forEach(function(k,i){var t=TYPES[k];
-    if(MODE==='app'&&(i===0||k==='screen'))h+='<div class="pgrp">'+(i===0?'📝 기획 카드 · 놓아서 적기만 해요':'🔗 흐름 카드 · 선으로 이어요')+'</div>';
+  if(MODE==='app')h+='<div class="pgrp">🔗 화면 흐름 카드 · 선으로 이어요</div>';
+  MODES[MODE].order.forEach(function(k){var t=TYPES[k];if(t.m==='app'&&t.c==='plan')return;
     h+='<div class="pitem" data-t="'+k+'" data-c="'+t.c+'"><div class="ico">'+t.ic+'</div><div><b>'+t.nm+'</b><span class="d">'+t.d+'</span></div></div>'});
   $('pal').innerHTML=h}
 var addCount=0;
@@ -600,10 +632,7 @@ function startScreen(){var sc=ofType('screen');if(!sc.length)return null;
 function optsOf(n){return fv(n,'opts').split(',').map(function(s){return s.trim()}).filter(Boolean).slice(0,6)}
 var BASE=[4,2,3,1,2,1];
 function counts(n){var o=optsOf(n),ex=P.extra[n.id]||[];return o.map(function(_,i){return BASE[i]+(ex[i]||0)})}
-function ideaSel(){var n=MODE==='app'&&sel&&sel.kind==='node'?nb(sel.id):null;return !!n&&TYPES[n.type].c==='plan'}
-function protoApp(){var box=$('proto'),st=startScreen();
-  wasIdea=ideaSel();
-  if(wasIdea){box.innerHTML='<div class="card"><div class="protoempty" style="line-height:1.7">💡 <b>기획 카드</b>는 화면이 아니에요.<br>앱을 만들기 전에 생각을 적어 두는 메모예요.<br>적어 두면 기획서 맨 위의 <b>앱 정보</b>에 들어가요.<br>선으로 이을 필요도 없어요.<br><br>폰 화면을 보려면 <b>화면 카드</b>를 눌러 보세요.</div></div>';return}
+function protoApp(box){var st=startScreen();
   if(!st){box.innerHTML='<div class="phone"><div class="screen"><div class="protoempty">화면 카드를 추가하면<br>여기에 폰 화면이 나와요.</div></div></div>';P.cur=null;syncNodes();return}
   var cur=P.cur&&nb(P.cur)&&nb(P.cur).type==='screen'?nb(P.cur):st;P.cur=cur.id;
   var idea=firstOf('idea'),inE=S.edges.filter(function(e){return e.to===cur.id}),outE=S.edges.filter(function(e){return e.from===cur.id});
@@ -637,9 +666,46 @@ function protoApp(){var box=$('proto'),st=startScreen();
     if(chs.some(function(c){return P.picks[c.id]==null})){P.err=1;proto();return}
     var saves=outE.some(function(x){var t=nb(x.to);return t&&t.type==='save'});
     if(saves&&chs.length){chs.forEach(function(c){var ex=P.extra[c.id]=P.extra[c.id]||[];ex[P.picks[c.id]]=(ex[P.picks[c.id]]||0)+1;delete P.picks[c.id]});P.saved=1}
-    P.cur=e.to;P.err=0;proto()}});
-  var hm=box.querySelector('[data-home]');if(hm)hm.onclick=function(){P.cur=null;P.err=0;proto()};
+    P.hist.push(cur.id);P.cur=e.to;P.err=0;proto()}});
+  var hm=box.querySelector('[data-home]');if(hm)hm.onclick=function(){P.cur=null;P.hist=[];P.err=0;proto()};
   syncNodes()}
+
+/* ---------- 앱: 기획 탭 ---------- */
+var PLAN=['idea','users','problem','must','nice','notnow','look'];
+function pfield(t,f,v){var id='p_'+t+'_'+f.k,ph=f.ph||(f.d?'예: '+f.d:''),h='<label for="'+id+'">'+esc(f.l)+'</label>';
+  if(f.t==='area')h+='<textarea id="'+id+'" rows="3" data-t="'+t+'" data-k="'+f.k+'" placeholder="'+esc(ph)+'">'+esc(v)+'</textarea>';
+  else h+='<input id="'+id+'" data-t="'+t+'" data-k="'+f.k+'" value="'+esc(v)+'" placeholder="'+esc(ph)+'">';
+  if(f.t==='pick')h+='<div class="pks">'+f.o.map(function(o){return '<button type="button" data-pv="'+esc(o)+'" class="'+(o===v?'on':'')+'">'+esc(o)+'</button>'}).join('')+'</div>';
+  return h}
+function renderPlan(){var h='<div class="plan"><h2>📝 앱 기획</h2><p class="pd">앱을 만들기 전에 생각을 적어 두는 곳이에요. 비워 둔 칸은 기획서에 안 들어가요. 화면을 이어 보는 건 위쪽 「🔗 화면 흐름」 탭에서 해요.</p>';
+  PLAN.forEach(function(t){var d=TYPES[t],n=firstOf(t),main='',more='',mf=false;
+    d.f.forEach(function(f){var v=n?fv(n,f.k):'',fh=pfield(t,f,v);if(f.more){more+=fh;if(v.trim())mf=true}else main+=fh});
+    h+='<section class="psec" data-pt="'+t+'" data-c="plan"><div class="hd"><span class="ico">'+d.ic+'</span><div><b>'+d.nm+'</b><span class="dd">'+esc(d.d)+'</span></div></div>'+main+(more?'<details class="more"'+(mf?' open':'')+'><summary>더 자세히 ▾</summary>'+more+'</details>':'')+'</section>'});
+  h+='<div class="pnext"><button class="btn-main" id="pGo">다음: 화면 흐름 만들기 ▶</button></div></div>';
+  $('planv').innerHTML=h}
+function setPlan(t,k,v){var n=firstOf(t);
+  if(!n){n={id:'n'+(++S.seq),type:t,x:0,y:0,f:{}};TYPES[t].f.forEach(function(f){n.f[f.k]=''});S.nodes.push(n)}
+  n.f[k]=v;persist();if(specOpen())$('spec').value=specText()}
+$('planv').addEventListener('input',function(e){var el=e.target;if(!el.dataset||!el.dataset.t)return;if(!editing){push();editing=true}setPlan(el.dataset.t,el.dataset.k,el.value)});
+$('planv').addEventListener('focusout',function(){editing=false});
+$('planv').addEventListener('click',function(e){
+  if(e.target.closest('#pGo')){setSub('flow');return}
+  var bt=e.target.closest('[data-pv]');if(!bt)return;var inp=bt.parentNode.previousElementSibling;if(!inp||!inp.dataset.t)return;
+  push();editing=false;setPlan(inp.dataset.t,inp.dataset.k,inp.value===bt.dataset.pv?'':bt.dataset.pv);renderPlan()});
+function applySub(){var plan=MODE==='app'&&SUB==='plan'&&!VIEW;
+  document.body.classList.toggle('sub-plan',plan);$('planv').hidden=!plan;$('subtabs').hidden=!(MODE==='app'&&!VIEW);$('bRun').hidden=MODE!=='app';
+  $('subtabs').querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.s===SUB)});if(plan)renderPlan()}
+function setSub(x){SUB=x;applySub();refreshAll();inspector();if(x==='flow'&&!S.view)fit()}
+$('subtabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&b.dataset.s!==SUB)setSub(b.dataset.s)});
+/* 프로토타입 실행 (큰 창) */
+function openRun(){if(!startScreen()){toast('화면 카드를 먼저 놓아 주세요');return}
+  if(TOURS)TOURS.ran=true;P.cur=null;P.hist=[];P.err=0;$('runModal').hidden=false;proto()}
+function closeRun(){$('runModal').hidden=true;proto()}
+$('bRun').onclick=openRun;$('runX').onclick=closeRun;
+$('runModal').addEventListener('pointerdown',function(e){if(e.target===$('runModal'))closeRun()});
+$('runBack').onclick=function(){if(P.hist.length){P.cur=P.hist.pop();P.err=0;proto()}};
+$('runHome').onclick=function(){P.cur=null;P.hist=[];P.err=0;proto()};
+window.addEventListener('keydown',function(e){if(e.key==='Escape'&&runOpen())closeRun()});
 
 /* ---------- 이미지 · 영상: 공통 ---------- */
 function upstream(fin){var seen={};seen[fin.id]=1;var q=[fin.id];
@@ -772,8 +838,11 @@ function protoVideo(){var box=$('proto'),d=vidData(),q=qVideo(d);
   box.querySelectorAll('[data-sc]').forEach(function(b){b.onclick=function(){P.cur=b.dataset.sc;proto()}});
   syncNodes()}
 
+function runOpen(){return !$('runModal').hidden}
 function proto(){$('protoh').textContent=MODES[MODE].ph;
-  if(MODE==='app')protoApp();else if(MODE==='image')protoImage();else protoVideo()}
+  if(MODE==='app'){if(runOpen())protoApp($('runBig'));protoApp($('proto'));
+    if(runOpen()){var c=P.cur&&nb(P.cur);$('runName').textContent=c?'📱 '+fv(c,'name'):'';$('runBack').disabled=!P.hist.length}}
+  else if(MODE==='image')protoImage();else protoVideo()}
 
 /* ---------- 기획서 · 프롬프트 ---------- */
 function specApp(){var idea=firstOf('idea'),us=firstOf('users'),L=[];
@@ -838,19 +907,21 @@ function tEdgeOf(fa,ta){return S.edges.filter(function(e){var a=nb(e.from),b=nb(
 function tPal(t){return function(){return document.querySelector('.pitem[data-t="'+t+'"]')}}
 var TSTEPS=[],TOURSET={};
 TOURSET.app=[
- {t:'💡 앱 아이디어 놓기',x:'왼쪽 「📝 기획 카드」 중 「앱 아이디어」를 캔버스에 놓아 보세요. 기획 카드는 선으로 이을 필요 없이 적기만 해요.',h:'카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('idea'),done:function(){return ofType('idea').length>=1}},
- {t:'✍️ 앱 이름 쓰기',c:1,x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 쓰고 「다 썼어요」를 눌러요.',h:'카드를 먼저 한 번 눌러야 오른쪽에 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
- {t:'😣 해결할 문제 놓기',x:'「해결할 문제」 카드를 놓아 보세요. 앱이 왜 필요한지 적는 카드예요.',h:'왼쪽 기획 카드 목록에서 「해결할 문제」를 눌러요.',el:tPal('problem'),done:function(){return ofType('problem').length>=1}},
- {t:'✍️ 문제 적기',c:1,x:'지금 어떤 점이 불편한지 한두 문장으로 쓰고 「다 썼어요」를 눌러요.',el:function(){return $('insp')},done:function(){var n=tFirst('problem');return !!n&&!!fvt(n,'problem')}},
- {t:'⭐ 꼭 필요한 기능 놓기',x:'「꼭 필요한 기능」 카드를 놓아 보세요. 이게 없으면 앱이 아닌 기능만 적어요.',el:tPal('must'),done:function(){return ofType('must').length>=1}},
- {t:'✍️ 기능 1 적기',c:1,x:'가장 중요한 기능을 하나 쓰고 「다 썼어요」를 눌러요. (예: 메뉴에 투표하기)',el:function(){return $('insp')},done:function(){var n=tFirst('must');return !!n&&!!fvt(n,'f1')}},
- {t:'📱 화면 카드 놓기',x:'여기부터는 「🔗 흐름 카드」예요. 「화면」 카드를 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'왼쪽 「화면」 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
+ {t:'💡 앱 아이디어 쓰기',c:1,x:'「앱 아이디어」 칸에 만들고 싶은 앱 이름을 쓰고, 무슨 앱인지도 한 줄 써요. 다 썼으면 「다 썼어요」를 눌러요.',h:'기획 탭에서는 카드를 놓지 않고 칸에 바로 적으면 돼요.',el:tSec('idea'),done:function(){return !!fvt(tFirst('idea'),'title')}},
+ {t:'👥 쓰는 사람 쓰기',c:1,x:'이 앱을 누가 쓸지 적어 보세요. (예: 우리 반 친구들)',el:tSec('users'),done:function(){return !!fvt(tFirst('users'),'who')}},
+ {t:'😣 해결할 문제 쓰기',c:1,x:'지금 어떤 점이 불편해서 이 앱이 필요한지 한두 문장으로 써요.',el:tSec('problem'),done:function(){return !!fvt(tFirst('problem'),'problem')}},
+ {t:'⭐ 꼭 필요한 기능 쓰기',c:1,x:'이게 없으면 앱이 아닌 기능을 하나 이상 써요. (예: 메뉴에 투표하기)',h:'기능 1 칸에 쓰면 돼요. 나머지는 비워 둬도 돼요.',el:tSec('must'),done:function(){return !!fvt(tFirst('must'),'f1')}},
+ {t:'🔗 화면 흐름 탭으로 가기',x:'기획을 적었으니, 이제 화면을 이어 볼 차례예요. 위쪽 「🔗 화면 흐름」 탭을 눌러요.',el:function(){return document.querySelector('#subtabs [data-s="flow"]')},done:function(){return SUB==='flow'}},
+ {t:'📱 화면 카드 놓기',x:'왼쪽 「화면」 카드를 캔버스에 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
  {t:'📱 화면 하나 더',x:'화면 카드를 하나 더 놓아 보세요. 두 번째 화면이에요.',el:tPal('screen'),done:function(){return ofType('screen').length>=2}},
  {t:'🔗 화면끼리 이어 주기',x:'첫 번째 화면의 동그라미를 잡고 두 번째 화면까지 끌어서 이어 보세요. 이어지지 않은 맨 앞 화면이 첫 화면이 돼요.',h:'첫 번째 화면 오른쪽 파란 동그라미를 잡고, 두 번째 화면 위까지 끌어서 놓아요.',el:function(){var n=ofType('screen')[0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('screen','screen').length>=1}},
  {t:'🏷️ 버튼 이름 붙이기',c:1,x:'방금 이은 선이 버튼이 돼요. 오른쪽에 버튼 이름을 쓰고 「다 썼어요」를 눌러요. (예: 시작하기)',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').some(function(e){return !!(e.label||'').trim()})}},
- {t:'👆 눌러 보기',x:'오른쪽 폰에서 방금 만든 버튼을 눌러 보세요. 정말 앱처럼 움직여요!',el:function(){return $('proto')},done:function(){return !!TOURS.pc}},
- {t:'📋 기획서 만들기',x:'위쪽 「기획서 만들기」를 눌러 보세요. 기획 카드와 화면 흐름이 한 장의 글로 정리돼요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}
+ {t:'▶ 프로토타입 실행',x:'오른쪽 위 「▶ 프로토타입 실행」을 눌러 큰 화면으로 앱을 열어 보세요.',el:function(){return $('bRun')},done:function(){return !!TOURS.ran}},
+ {t:'👆 눌러 보기',x:'큰 폰 화면에서 방금 만든 버튼을 눌러 보세요. 정말 앱처럼 화면이 넘어가요! 「← 이전」, 「⟲ 처음으로」도 써 보세요.',el:function(){return $('runBig')},done:function(){return !!TOURS.pc}},
+ {t:'✕ 닫기',x:'다 봤으면 오른쪽 위 ✕를 눌러 닫아요.',el:function(){return $('runX')},done:function(){return !runOpen()}},
+ {t:'📋 기획서 만들기',x:'위쪽 「기획서 만들기」를 눌러 보세요. 기획 탭에 적은 내용과 화면 흐름이 한 장의 글로 정리돼요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}
 ];
+function tSec(t){return function(){return document.querySelector('#planv [data-pt="'+t+'"]')}}
 function tPut(t,title,x,n){return {t:title,x:x,h:'왼쪽 보관함의 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal(t),done:function(){return ofType(t).length>=n}}}
 function tLnk(fa,ta,title,x,i){return {t:title,x:x,h:'앞 카드 오른쪽 파란 동그라미를 마우스로 잡고, 뒤 카드 위까지 끌어서 놓아요.',el:function(){var n=ofType(fa)[i||0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf(fa,ta).length>=1}}}
 function tFil(title,x,typ,keys,c,i,h){return {t:title,x:x,c:c,h:h||'카드를 한 번 눌러 고르면 오른쪽에 칸이 나와요. 거기에 쓰거나 골라요.',el:function(){return $('insp')},done:function(){var n=ofType(typ)[i||0];return !!n&&keys.every(function(k){return !!fvt(n,k)})}}}
@@ -886,7 +957,7 @@ TOURSET.video=[
  {t:'🧮 시간 맞추기',x:'장면들의 초를 모두 더한 값이 전체 길이와 같아야 해요. 장면의 초나 전체 길이를 바꿔서 맞춰 보세요.',h:'예: 5초 + 10초 장면이면 전체 길이를 15초로 골라요.',el:function(){return $('insp')},done:function(){var f=ofType('v_final')[0],t=f?parseInt(fv(f,'total'),10):0,sum=0;ofType('v_scene').forEach(function(n){sum+=parseInt(fv(n,'sec'),10)||0});return t>0&&sum===t}},
  tDoc(),tPr()];
 function tourStart(){
-  if(VIEW)return;TSTEPS=TOURSET[MODE];
+  if(VIEW)return;TSTEPS=TOURSET[MODE];if(MODE==='app'&&SUB!=='plan'){SUB='plan';applySub()}
   if(S.nodes.length){push();S.nodes=[];S.edges=[];sel=null;P=newP();refreshAll();inspector();toast('새 판에서 시작해요. 되돌리기로 이전 기획을 살릴 수 있어요')}
   TOURS={on:true,i:0,pc:false,ok:{}};tourKey=-1;
   clearInterval(tourTimer);tourTimer=setInterval(tourPlace,300);tourCheck()}
@@ -923,7 +994,7 @@ function tourPlace(){
     else{x=r.left;y=r.top-14-ph}}
   pop.style.left=Math.max(10,Math.min(x,vw-pw-10))+'px';pop.style.top=Math.max(10,Math.min(y,vh-ph-10))+'px'}
 $('bTour').onclick=tourStart;$('bTour2').onclick=tourStart;
-$('proto').addEventListener('click',function(){if(TOURS)TOURS.pc=true});
+$('proto').addEventListener('click',function(){if(TOURS)TOURS.pc=true});$('runBig').addEventListener('click',function(){if(TOURS)TOURS.pc=true});
 document.addEventListener('click',function(){setTimeout(tourCheck,0)},true);
 document.addEventListener('input',function(){setTimeout(tourCheck,0)},true);
 window.addEventListener('resize',tourPlace);
@@ -969,7 +1040,7 @@ $('bUndo').onclick=undo;
 function setModeUI(){var m=MODES[MODE];
   $('tabs').querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.m===MODE)});
   $('bSpec').textContent=m.btn;$('specHint').textContent=m.hint;$('bSample2').textContent=m.sample;$('protoh').textContent=m.ph;
-  closeSpec();buildPalette();tourEnd(false)}
+  closeSpec();if(runOpen())$('runModal').hidden=true;applySub();buildPalette();tourEnd(false)}
 function switchTo(m){if(!MODES[m])return;B[MODE].view=view;MODE=m;S=B[m];view=S.view?{x:S.view.x,y:S.view.y,k:S.view.k}:{x:60,y:80,k:1};
   hist=[];sel=null;P=newP();moreOpen=false;nl.innerHTML='';els={};setModeUI()}
 $('tabs').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.m===MODE)return;
@@ -1078,7 +1149,7 @@ $('bSubmit').onclick=async function(){var btn=this,msg=$('clMsg');
       else shared=clean(await dec(m[2]))}catch(e){}
     if(!shared||!shared.nodes.length){shared=null;toast('링크를 읽지 못했어요. 다시 받아 주세요');history.replaceState(null,'',location.pathname+location.search)}}
   if(shared){
-    if(m[1]==='v'){VIEW=true;document.body.classList.add('view')}
+    if(m[1]==='v'){VIEW=true;SUB='flow';document.body.classList.add('view')}
     else if(B[shared.mode].nodes.length&&!window.confirm('받은 기획을 열면 지금 이 브라우저에 있던 '+MODES[shared.mode].nm+' 작업이 바뀌어요. 계속할까요?')){shared=null;history.replaceState(null,'',location.pathname+location.search)}}
   if(shared){if(shared.mode!==MODE){B[MODE].view=view;MODE=shared.mode;S=B[MODE];view={x:60,y:80,k:1}}
     S.nodes=shared.nodes;S.edges=shared.edges;S.seq=shared.seq}
