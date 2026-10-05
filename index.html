@@ -189,6 +189,7 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
 #tourPop .th{font-size:12px;color:var(--sub);line-height:1.45;background:var(--bg);border-radius:8px;padding:6px 8px;margin:0 0 10px}
 #tourPop .tb{display:flex;gap:6px;justify-content:flex-end}
 #tourPop .tb button{font-size:12px;padding:5px 10px}
+#tourPop .tb button:disabled{opacity:.4;cursor:not-allowed}
 #tourPop[hidden],#tourSpot[hidden]{display:none}
 @media (max-width:700px){#tourPop{left:10px!important;right:10px;bottom:10px;top:auto!important;width:auto}}
 @media (max-width:1100px){main{grid-template-columns:176px minmax(0,1fr) 300px}}
@@ -813,31 +814,38 @@ function tEdgeOf(fa,ta){return S.edges.filter(function(e){var a=nb(e.from),b=nb(
 function tPal(t){return function(){return document.querySelector('.pitem[data-t="'+t+'"]')}}
 var TSTEPS=[
  {t:'💡 아이디어 카드 놓기',x:'왼쪽 보관함의 「앱 아이디어」 카드를 캔버스로 끌어다 놓아 보세요. (눌러도 돼요)',h:'카드를 마우스로 꾹 잡고 가운데 캔버스(점선 칸) 위에서 놓으면 돼요. 카드를 한 번 눌러도 생겨요.',el:tPal('idea'),done:function(){return ofType('idea').length>=1}},
- {t:'✍️ 내용 쓰기',x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 보세요.',h:'오른쪽 「앱 이름」 칸을 눌러 지우고 내 앱 이름을 쓰면 돼요. 카드를 먼저 한 번 눌러야 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
+ {t:'✍️ 내용 쓰기',c:1,x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 쓰세요. 다 썼으면 「다 썼어요」를 눌러요.',h:'오른쪽 「앱 이름」 칸을 눌러 지우고 내 앱 이름을 쓰면 돼요. 카드를 먼저 한 번 눌러야 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
  {t:'📱 화면 카드 놓기',x:'이번엔 「화면」 카드를 캔버스에 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'왼쪽 「화면」 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
  {t:'🔗 카드 이어 주기',x:'아이디어 카드 오른쪽의 동그라미를 잡고, 화면 카드까지 끌어서 이어 보세요.',h:'아이디어 카드 오른쪽 파란 동그라미를 마우스로 잡고, 화면 카드 위까지 끌어서 놓아요.',el:function(){var n=tFirst('idea');return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('idea','screen').length>=1}},
  {t:'📱 화면 하나 더',x:'화면 카드를 하나 더 놓아 보세요. 두 번째 화면이에요.',h:'왼쪽 「화면」 카드를 한 번 더 누르면 두 번째 화면이 생겨요.',el:tPal('screen'),done:function(){return ofType('screen').length>=2}},
  {t:'🔗 화면끼리 이어 주기',x:'첫 번째 화면의 동그라미를 잡고 두 번째 화면까지 끌어서 이어 보세요.',h:'첫 번째 화면 오른쪽 파란 동그라미를 잡고, 두 번째 화면 위까지 끌어서 놓아요.',el:function(){var n=ofType('screen')[0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('screen','screen').length>=1}},
- {t:'🏷️ 버튼 이름 붙이기',x:'방금 이은 선이 버튼이 돼요. 오른쪽에 버튼 이름을 써 보세요. (예: 시작하기)',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').some(function(e){return !!(e.label||'').trim()})}},
+ {t:'🏷️ 버튼 이름 붙이기',c:1,x:'방금 이은 선이 버튼이 돼요. 오른쪽에 버튼 이름을 쓰고 「다 썼어요」를 눌러요. (예: 시작하기)',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').some(function(e){return !!(e.label||'').trim()})}},
  {t:'👆 눌러 보기',x:'오른쪽 폰에서 방금 만든 버튼을 눌러 보세요. 정말 앱처럼 움직여요!',el:function(){return $('proto')},done:function(){return !!TOURS.pc}},
  {t:'📋 기획서 만들기',x:'위쪽 「기획서 만들기」를 눌러 보세요. 만든 기획이 글로 정리돼요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}
 ];
 function tourStart(){
   if(MODE!=='app'||VIEW)return;
   if(S.nodes.length){push();S.nodes=[];S.edges=[];sel=null;P=newP();refreshAll();inspector();toast('새 판에서 시작해요. 되돌리기로 이전 기획을 살릴 수 있어요')}
-  TOURS={on:true,i:0,pc:false};tourKey=-1;
+  TOURS={on:true,i:0,pc:false,ok:{}};tourKey=-1;
   clearInterval(tourTimer);tourTimer=setInterval(tourPlace,300);tourCheck()}
 function tourEnd(done){
   if(!TOURS)return;TOURS.on=false;TOURS=null;clearInterval(tourTimer);
   $('tourSpot').hidden=true;$('tourPop').hidden=true;
   if(done)toast('🎉 따라 만들기 끝! 복사한 기획서를 Gemini나 Claude에 붙여넣어 보세요')}
+function tStepDone(i){var st=TSTEPS[i],c=st.done();
+  if(!st.c)return c;
+  if(!c){delete TOURS.ok[i];return false}
+  return !!TOURS.ok[i]}
+function tourOk(){if(!TOURS)return;var st=TSTEPS[TOURS.i];if(st&&st.c&&st.done()){TOURS.ok[TOURS.i]=true;tourCheck()}}
 function tourCheck(){
   if(!TOURS||!TOURS.on)return;
-  var i=0;while(i<TSTEPS.length&&TSTEPS[i].done())i++;
+  var i=0;while(i<TSTEPS.length&&tStepDone(i))i++;
   TOURS.i=i;if(i>=TSTEPS.length){tourEnd(true);return}
   if(tourKey!==i){tourKey=i;var st=TSTEPS[i],pop=$('tourPop');
-    pop.innerHTML='<div class="tn">'+(i+1)+' / '+TSTEPS.length+'</div><b>'+st.t+'</b><p>'+st.x+'</p><div class="th">💬 막히면: '+st.h+'</div><div class="tb"><button id="tpEnd">그만하기</button></div>';$('tpEnd').onclick=function(){tourEnd(false)};
+    pop.innerHTML='<div class="tn">'+(i+1)+' / '+TSTEPS.length+'</div><b>'+st.t+'</b><p>'+st.x+'</p><div class="th">💬 막히면: '+st.h+'</div><div class="tb"><button id="tpEnd">그만하기</button>'+(st.c?'<button id="tpOk" class="btn-main">다 썼어요 ✓</button>':'')+'</div>';
+    if(st.c)$('tpOk').onclick=tourOk;$('tpEnd').onclick=function(){tourEnd(false)};
     var el=st.el();if(el&&el.scrollIntoView)try{el.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
+  var okb=$('tpOk');if(okb)okb.disabled=!TSTEPS[TOURS.i].done();
   tourPlace()}
 function tourPlace(){
   if(!TOURS||!TOURS.on)return;
@@ -857,6 +865,7 @@ $('proto').addEventListener('click',function(){if(TOURS)TOURS.pc=true});
 document.addEventListener('click',function(){setTimeout(tourCheck,0)},true);
 document.addEventListener('input',function(){setTimeout(tourCheck,0)},true);
 window.addEventListener('resize',tourPlace);
+document.addEventListener('keydown',function(e){if(TOURS&&e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'&&e.target.type!=='checkbox')tourOk()});
 
 /* ---------- 예시 ---------- */
 function build(fn){push();S.nodes=[];S.edges=[];S.seq=0;P=newP();
