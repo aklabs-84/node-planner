@@ -184,6 +184,9 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
 #specbar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 #spec{flex:1;min-height:260px;height:52vh;font-size:13px;line-height:1.55;resize:none;width:100%}
 #specFoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#ctoast{position:fixed;left:50%;top:24px;transform:translate(-50%,-12px);z-index:90;max-width:90vw;padding:12px 20px;border-radius:14px;background:var(--ink);color:var(--bg);font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:center}
+#ctoast.on{opacity:1;transform:translate(-50%,0)}
+#ctoast.bad{background:#c0392b;color:#fff}
 #specmsg{flex:1;font-size:12px;color:var(--sub);min-width:140px}
 #tourSpot{position:fixed;z-index:70;pointer-events:none;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,15,25,.55);outline:3px solid var(--accent);transition:left .25s,top .25s,width .25s,height .25s;animation:tpulse 1.2s ease-in-out infinite}
 @keyframes tpulse{50%{outline-offset:4px}}
@@ -316,6 +319,7 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
 <div id="runModal" hidden role="dialog" aria-modal="true" aria-label="프로토타입 실행">
   <div id="runBox"><div id="runHead"><button id="runBack">← 이전</button><b id="runName"></b><button id="runHome">⟲ 처음으로</button><button id="runX" aria-label="닫기">✕</button></div><div id="runBig"></div></div>
 </div>
+<div id="ctoast" role="status" aria-live="polite"></div>
 <div id="courseModal" hidden role="dialog" aria-modal="true" aria-label="따라 만들기 코스">
   <div id="courseBox"><div style="display:flex;align-items:center"><h2 id="courseTitle" style="flex:1">따라 만들기 코스</h2><button id="courseX" aria-label="닫기">✕</button></div><p class="cs" id="courseSub">앱을 하나 골라 단계마다 안내를 따라 만들어 보세요. 다 만들면 기획서를 AI에게 붙여넣어 진짜 앱이 돼요. 위에서부터 차례로 하면 쉬워요.</p><div id="courseList"></div></div>
 </div>
@@ -946,8 +950,10 @@ function specText(){var en=$('en').checked;
   if(specKind==='pr')return MODE==='image'?promptImage(en):promptVideo(en);
   return MODE==='image'?docImage(en):docVideo(en)}
 function specOpen(){return !$('specModal').hidden}
-function copyText(msg){var t=$('spec'),m=$('specmsg'),fb='글을 선택해서 복사해 주세요.';
-  try{navigator.clipboard.writeText(t.value).then(function(){m.textContent=msg},function(){m.textContent=fb;t.select()})}catch(e){m.textContent=fb;t.select()}}
+var ctT;function ctoast(m,bad){var e=$('ctoast');e.textContent=m;e.classList.toggle('bad',!!bad);e.classList.add('on');clearTimeout(ctT);ctT=setTimeout(function(){e.classList.remove('on')},2600)}
+function copyText(msg){var t=$('spec'),m=$('specmsg'),fb='복사하지 못했어요. 글을 직접 선택해서 복사해 주세요.';
+  function ok(){m.textContent=msg;ctoast('✅ '+msg)}function bad(){m.textContent=fb;ctoast(fb,1);t.select()}
+  try{navigator.clipboard.writeText(t.value).then(ok,bad)}catch(e){bad()}}
 var SPEC_OK='복사했어요. ';
 function specOkMsg(){return MODE==='app'?SPEC_OK+'AI에게 붙여넣으면 돼요.':SPEC_OK+(MODE==='image'?'이미지':'영상')+' 만드는 AI에 붙여넣으면 돼요.'}
 function showSpec(kind){specKind=kind;var t=$('spec');t.value=specText();
