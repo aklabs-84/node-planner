@@ -45,6 +45,7 @@ aside{background:var(--panel);overflow:auto}
 .pitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:grab;user-select:none;touch-action:none;flex:none}
 .pitem:hover{border-color:var(--mute)}
 .pitem .ico{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.pgrp{font-size:11px;font-weight:700;color:var(--sub);margin:8px 2px 0;flex:none}
 .pitem b{display:block;font-size:13px;line-height:1.2}
 .pitem span.d{font-size:12px;color:var(--sub);line-height:1.2}
 [data-c=plan]{--cbg:var(--plan-bg);--cfg:var(--plan-fg)}
@@ -281,7 +282,12 @@ function T(id,m,c,ic,nm,d,sum,tag,f,note){TYPES[id]={m:m,c:c,ic:ic,nm:nm,d:d,sum
 
 /* 앱 */
 T('idea','app','plan','💡','앱 아이디어','무엇을 만들까?','title','기획',[F('title','앱 이름','text','우리 반 점심 투표'),F('goal','무슨 앱인가요?','text','점심 메뉴를 쉽게 정해요')]);
-T('users','app','plan','👥','쓰는 사람','누가 쓸까?','who','기획',[F('who','누가 쓰나요?','text','우리 반 친구들')]);
+T('users','app','plan','👥','쓰는 사람','누가 쓸까?','who','기획',[F('who','누가 쓰나요?','text','우리 반 친구들'),F('when','언제 어떤 상황에서 쓰나요?','text','',null,{more:1,ph:'예: 점심시간 직전 교실에서'})]);
+T('problem','app','plan','😣','해결할 문제','뭐가 불편해?','problem','기획',[F('problem','지금 어떤 점이 불편한가요?','area','',null,{ph:'예: 점심 메뉴를 정하는 데 10분이나 걸려요'}),F('better','앱을 쓰면 어떻게 달라지나요?','text','',null,{more:1,ph:'예: 1분 안에 투표로 정해요'})]);
+T('must','app','plan','⭐','꼭 필요한 기능','이게 없으면 앱이 아니야','f1','기획',[F('f1','기능 1','text','',null,{ph:'예: 메뉴에 투표하기'}),F('f2','기능 2','text','',null,{ph:'예: 결과 보기'}),F('f3','기능 3','text','',null,{more:1,ph:'예: 한 번만 투표하게 막기'})]);
+T('nice','app','plan','🌱','있으면 좋은 기능','나중에 넣어도 돼','items','기획',[F('items','넣고 싶은 기능들','area','',null,{ph:'예: 지난 투표 기록, 친구에게 공유'})]);
+T('notnow','app','plan','🚫','이번엔 안 만들 것','일부러 빼는 것','items','기획',[F('items','이번 버전에서 하지 않을 것','text','',null,{ph:'예: 로그인, 결제, 채팅'})]);
+T('look','app','plan','🎨','느낌·디자인','어떤 분위기?','mood','기획',[F('mood','분위기','pick','',['밝고 귀여운','깔끔하고 단정한','신나는','차분한','진지한'],{ph:'예: 밝고 귀여운'}),F('color','주된 색','text','',null,{more:1,ph:'예: 노랑과 하늘색'})]);
 T('screen','app','screen','📱','화면','앱 화면 한 장','name','화면',[F('name','화면 이름','text','새 화면'),F('heading','화면 큰 제목','text',''),F('body','안내 글','area','')]);
 T('input','app','inp','✍️','입력 칸','글자를 쓰는 칸','label','입력',[F('label','칸 이름','text','이름'),F('ph','예시 글자','text','여기에 써요')]);
 T('choice','app','inp','🗳️','선택지','하나를 고르기','q','입력',[F('q','질문','text','오늘 점심 뭐 먹을까?'),F('opts','선택지 (쉼표로 나눠요)','text','김밥, 떡볶이, 치킨')]);
@@ -348,10 +354,10 @@ T('v_final','video','fin','🎞️','영상 만들기 요청','길이·비율 �
   F('purpose','어디에 쓸 영상인가요?','text','',null,{more:1,ph:'예: 학교 홍보, 수업 시간 발표'})]);
 ALLOW.v_scene=['v_scene','v_final'];ALLOW.v_text=['v_scene'];ALLOW.v_sound=['v_scene','v_final'];ALLOW.v_avoid=['v_final'];ALLOW.v_final=[];
 /* 앱 */
-ALLOW.idea=['screen'];ALLOW.users=['screen'];ALLOW.screen=['screen','save','ai'];ALLOW.input=['screen'];ALLOW.choice=['screen'];ALLOW.save=['result'];ALLOW.result=['screen'];ALLOW.ai=['screen'];
+ALLOW.idea=[];ALLOW.users=[];ALLOW.problem=[];ALLOW.must=[];ALLOW.nice=[];ALLOW.notnow=[];ALLOW.look=[];ALLOW.screen=['screen','save','ai'];ALLOW.input=['screen'];ALLOW.choice=['screen'];ALLOW.save=['result'];ALLOW.result=['screen'];ALLOW.ai=['screen'];
 
 var MODES={
-  app:{nm:'앱',order:['idea','users','screen','input','choice','save','result','ai'],ph:'눌러 보는 프로토타입',btn:'기획서 만들기',hint:'복사해서 Gemini나 Claude에 붙여넣어요',sample:'투표 앱 예시 불러오기'},
+  app:{nm:'앱',order:['idea','users','problem','must','nice','notnow','look','screen','input','choice','save','result','ai'],ph:'눌러 보는 프로토타입',btn:'기획서 만들기',hint:'복사해서 Gemini나 Claude에 붙여넣어요',sample:'투표 앱 예시 불러오기'},
   image:{nm:'이미지',order:['i_subject','i_style','i_scene','i_mood','i_ref','i_avoid','i_final'],ph:'이렇게 만들어져요 (미리보기)',btn:'기획서·프롬프트 만들기',hint:'복사한 글을 이미지 만드는 AI에 붙여넣어요',sample:'우리 반 포스터 예시 불러오기'},
   video:{nm:'영상',order:['v_scene','v_text','v_sound','v_avoid','v_final'],ph:'이렇게 만들어져요 (스토리보드)',btn:'기획서·프롬프트 만들기',hint:'복사한 글을 영상 만드는 AI에 붙여넣어요',sample:'30초 학교 홍보영상 예시 불러오기'}
 };
@@ -453,6 +459,7 @@ function hint(){var t;
   if(VIEW)t=MODE==='app'?'둘러보는 중이에요. 화면 카드나 오른쪽 폰을 눌러 보세요':MODE==='video'?'둘러보는 중이에요. 장면 카드나 오른쪽 스토리보드를 눌러 보세요':'둘러보는 중이에요. 오른쪽 점검표와 프롬프트를 확인해 보세요';
   else if(sel&&sel.kind==='edge')t='선 옆의 ✕를 누르면 선이 끊어져요 (Delete 키도 돼요)';
   else if(!S.nodes.length)t='왼쪽에서 카드를 끌어다 놓아 보세요 (눌러도 돼요)';
+  else if(MODE==='app'&&!S.nodes.some(function(n){return TYPES[n.type].c!=='plan'}))t='기획 카드는 놓아서 적기만 해도 돼요. 이제 「화면」 카드를 놓아 보세요'
   else if(!S.edges.length)t='카드 오른쪽 동그라미를 잡고, 다른 카드로 끌어서 이어 보세요';
   else if(MODE==='app'){
     if(S.edges.some(function(e){var a=nb(e.from),b=nb(e.to);return a&&b&&a.type==='screen'&&b.type==='screen'&&!e.label}))t='화면 사이 선을 눌러 버튼 이름을 붙여 보세요';
@@ -528,7 +535,9 @@ window.addEventListener('keydown',function(e){
 
 /* ---------- 카드 보관함 ---------- */
 function buildPalette(){var h='<h2>카드 보관함</h2>';
-  MODES[MODE].order.forEach(function(k){var t=TYPES[k];h+='<div class="pitem" data-t="'+k+'" data-c="'+t.c+'"><div class="ico">'+t.ic+'</div><div><b>'+t.nm+'</b><span class="d">'+t.d+'</span></div></div>'});
+  MODES[MODE].order.forEach(function(k,i){var t=TYPES[k];
+    if(MODE==='app'&&(i===0||k==='screen'))h+='<div class="pgrp">'+(i===0?'📝 기획 카드 · 놓아서 적기만 해요':'🔗 흐름 카드 · 선으로 이어요')+'</div>';
+    h+='<div class="pitem" data-t="'+k+'" data-c="'+t.c+'"><div class="ico">'+t.ic+'</div><div><b>'+t.nm+'</b><span class="d">'+t.d+'</span></div></div>'});
   $('pal').innerHTML=h}
 var addCount=0;
 $('pal').addEventListener('pointerdown',function(e){
@@ -584,19 +593,17 @@ function inspector(focusLabel){var box=$('insp');
   var d=$('del');if(d)d.onclick=removeSel}
 
 /* ---------- 앱: 프로토타입 ---------- */
-function ideaOf(sc){var e=S.edges.filter(function(e){var f=nb(e.from);return e.to===sc.id&&f&&f.type==='idea'})[0];return e?nb(e.from):null}
-function scHead(sc){var i=ideaOf(sc);return fvt(sc,'heading')||(i?fvt(i,'title'):'')}
-function scBody(sc){var i=ideaOf(sc);return fvt(sc,'body')||(i?fvt(i,'goal'):'')}
+function scHead(sc){return fvt(sc,'heading')}
+function scBody(sc){return fvt(sc,'body')}
 function startScreen(){var sc=ofType('screen');if(!sc.length)return null;
-  for(var j=0;j<sc.length;j++)if(ideaOf(sc[j]))return sc[j];
   for(var i=0;i<sc.length;i++){var inc=S.edges.some(function(e){var f=nb(e.from);return e.to===sc[i].id&&f&&f.type==='screen'});if(!inc)return sc[i]}return sc[0]}
 function optsOf(n){return fv(n,'opts').split(',').map(function(s){return s.trim()}).filter(Boolean).slice(0,6)}
 var BASE=[4,2,3,1,2,1];
 function counts(n){var o=optsOf(n),ex=P.extra[n.id]||[];return o.map(function(_,i){return BASE[i]+(ex[i]||0)})}
-function ideaSel(){var n=MODE==='app'&&sel&&sel.kind==='node'?nb(sel.id):null;return !!n&&n.type==='idea'}
+function ideaSel(){var n=MODE==='app'&&sel&&sel.kind==='node'?nb(sel.id):null;return !!n&&TYPES[n.type].c==='plan'}
 function protoApp(){var box=$('proto'),st=startScreen();
   wasIdea=ideaSel();
-  if(wasIdea){box.innerHTML='<div class="card"><div class="protoempty" style="line-height:1.7">💡 <b>앱 아이디어 카드</b>는 화면이 아니에요.<br>앱의 <b>이름과 목적</b>을 적어 두는 카드예요.<br>여기에 적은 이름은 폰 화면 맨 위와 기획서에 들어가요.<br>이 카드에 <b>이은 화면</b>이 앱의 <b>첫 화면</b>이 되고,<br>그 화면의 빈 제목·안내 글은 여기 내용으로 채워져요.<br><br>폰 화면을 보려면 <b>화면 카드</b>를 눌러 보세요.</div></div>';return}
+  if(wasIdea){box.innerHTML='<div class="card"><div class="protoempty" style="line-height:1.7">💡 <b>기획 카드</b>는 화면이 아니에요.<br>앱을 만들기 전에 생각을 적어 두는 메모예요.<br>적어 두면 기획서 맨 위의 <b>앱 정보</b>에 들어가요.<br>선으로 이을 필요도 없어요.<br><br>폰 화면을 보려면 <b>화면 카드</b>를 눌러 보세요.</div></div>';return}
   if(!st){box.innerHTML='<div class="phone"><div class="screen"><div class="protoempty">화면 카드를 추가하면<br>여기에 폰 화면이 나와요.</div></div></div>';P.cur=null;syncNodes();return}
   var cur=P.cur&&nb(P.cur)&&nb(P.cur).type==='screen'?nb(P.cur):st;P.cur=cur.id;
   var idea=firstOf('idea'),inE=S.edges.filter(function(e){return e.to===cur.id}),outE=S.edges.filter(function(e){return e.from===cur.id});
@@ -770,7 +777,16 @@ function proto(){$('protoh').textContent=MODES[MODE].ph;
 
 /* ---------- 기획서 · 프롬프트 ---------- */
 function specApp(){var idea=firstOf('idea'),us=firstOf('users'),L=[];
-  L.push('[앱 기획서]');L.push('앱 이름: '+(fv(idea,'title')||'(아직 안 정했어요)'));L.push('목적: '+(fv(idea,'goal')||'(아직 안 적었어요)'));L.push('사용자: '+(fv(us,'who')||'(아직 안 적었어요)'));L.push('');
+  function pf(t,k){return fvt(firstOf(t),k)}
+  L.push('[앱 기획서]');L.push('앱 이름: '+(fv(idea,'title')||'(아직 안 정했어요)'));L.push('목적: '+(fv(idea,'goal')||'(아직 안 적었어요)'));L.push('사용자: '+(fv(us,'who')||'(아직 안 적었어요)')+(pf('users','when')?' ('+pf('users','when')+')':''));
+  if(pf('problem','problem'))L.push('해결할 문제: '+pf('problem','problem'));
+  if(pf('problem','better'))L.push('앱을 쓰면: '+pf('problem','better'));
+  var mu=['f1','f2','f3'].map(function(k){return pf('must',k)}).filter(Boolean);
+  if(mu.length){L.push('꼭 필요한 기능:');mu.forEach(function(m,i){L.push('  '+(i+1)+'. '+m)})}
+  if(pf('nice','items'))L.push('있으면 좋은 기능(나중에): '+pf('nice','items').replace(/\n/g,', '));
+  if(pf('notnow','items'))L.push('이번엔 만들지 않을 것: '+pf('notnow','items'));
+  if(pf('look','mood')||pf('look','color'))L.push('느낌·디자인: '+[pf('look','mood'),pf('look','color')].filter(Boolean).join(', '));
+  L.push('');
   var st=startScreen(),order=[],seen={};
   if(st){var q=[st];while(q.length){var c=q.shift();if(seen[c.id])continue;seen[c.id]=1;order.push(c);
     S.edges.filter(function(e){return e.from===c.id}).forEach(function(e){var t=nb(e.to);if(t&&t.type==='screen')q.push(t)})}}
@@ -787,7 +803,7 @@ function specApp(){var idea=firstOf('idea'),us=firstOf('users'),L=[];
       if(t.type==='screen')L.push('   버튼 "'+(e.label||'다음')+'" 누르면 → '+fv(t,'name')+' 으로 이동');
       if(t.type==='save')L.push('   '+(e.label||'버튼을 누르면')+' 저장: '+fv(t,'what'));
       if(t.type==='ai')L.push('   '+(e.label||'이 화면에서')+' AI에게 시키기: '+fv(t,'ask'))})});
-  L.push('');L.push('[요청] 위 기획대로 모바일 화면에 맞는 웹앱을 만들어 주세요. 코딩 전에 화면 구성을 먼저 설명해 주세요.');
+  L.push('');L.push('[요청] 위 기획대로 모바일 화면에 맞는 웹앱을 만들어 주세요.'+(pf('notnow','items')?' "이번엔 만들지 않을 것"은 넣지 마세요.':'')+' 코딩 전에 화면 구성을 먼저 설명해 주세요.');
   return L.join('\n')}
 var specKind='doc';
 function specText(){var en=$('en').checked;
@@ -822,15 +838,18 @@ function tEdgeOf(fa,ta){return S.edges.filter(function(e){var a=nb(e.from),b=nb(
 function tPal(t){return function(){return document.querySelector('.pitem[data-t="'+t+'"]')}}
 var TSTEPS=[],TOURSET={};
 TOURSET.app=[
- {t:'💡 아이디어 카드 놓기',x:'왼쪽 보관함의 「앱 아이디어」 카드를 캔버스로 끌어다 놓아 보세요. (눌러도 돼요)',h:'카드를 마우스로 꾹 잡고 가운데 캔버스(점선 칸) 위에서 놓으면 돼요. 카드를 한 번 눌러도 생겨요.',el:tPal('idea'),done:function(){return ofType('idea').length>=1}},
- {t:'✍️ 내용 쓰기',c:1,x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 쓰세요. 다 썼으면 「다 썼어요」를 눌러요.',h:'오른쪽 「앱 이름」 칸을 눌러 지우고 내 앱 이름을 쓰면 돼요. 카드를 먼저 한 번 눌러야 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
- {t:'📱 화면 카드 놓기',x:'이번엔 「화면」 카드를 캔버스에 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'왼쪽 「화면」 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
- {t:'🔗 첫 화면 만들기',x:'아이디어 카드 오른쪽의 동그라미를 잡고, 화면 카드까지 끌어서 이어 보세요. 이은 화면이 앱의 첫 화면이 되고, 아이디어 카드에 쓴 내용이 채워져요.',h:'아이디어 카드 오른쪽 파란 동그라미를 마우스로 잡고, 화면 카드 위까지 끌어서 놓아요.',el:function(){var n=tFirst('idea');return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('idea','screen').length>=1}},
- {t:'📱 화면 하나 더',x:'화면 카드를 하나 더 놓아 보세요. 두 번째 화면이에요.',h:'왼쪽 「화면」 카드를 한 번 더 누르면 두 번째 화면이 생겨요.',el:tPal('screen'),done:function(){return ofType('screen').length>=2}},
- {t:'🔗 화면끼리 이어 주기',x:'첫 번째 화면의 동그라미를 잡고 두 번째 화면까지 끌어서 이어 보세요.',h:'첫 번째 화면 오른쪽 파란 동그라미를 잡고, 두 번째 화면 위까지 끌어서 놓아요.',el:function(){var n=ofType('screen')[0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('screen','screen').length>=1}},
+ {t:'💡 앱 아이디어 놓기',x:'왼쪽 「📝 기획 카드」 중 「앱 아이디어」를 캔버스에 놓아 보세요. 기획 카드는 선으로 이을 필요 없이 적기만 해요.',h:'카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('idea'),done:function(){return ofType('idea').length>=1}},
+ {t:'✍️ 앱 이름 쓰기',c:1,x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 쓰고 「다 썼어요」를 눌러요.',h:'카드를 먼저 한 번 눌러야 오른쪽에 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
+ {t:'😣 해결할 문제 놓기',x:'「해결할 문제」 카드를 놓아 보세요. 앱이 왜 필요한지 적는 카드예요.',h:'왼쪽 기획 카드 목록에서 「해결할 문제」를 눌러요.',el:tPal('problem'),done:function(){return ofType('problem').length>=1}},
+ {t:'✍️ 문제 적기',c:1,x:'지금 어떤 점이 불편한지 한두 문장으로 쓰고 「다 썼어요」를 눌러요.',el:function(){return $('insp')},done:function(){var n=tFirst('problem');return !!n&&!!fvt(n,'problem')}},
+ {t:'⭐ 꼭 필요한 기능 놓기',x:'「꼭 필요한 기능」 카드를 놓아 보세요. 이게 없으면 앱이 아닌 기능만 적어요.',el:tPal('must'),done:function(){return ofType('must').length>=1}},
+ {t:'✍️ 기능 1 적기',c:1,x:'가장 중요한 기능을 하나 쓰고 「다 썼어요」를 눌러요. (예: 메뉴에 투표하기)',el:function(){return $('insp')},done:function(){var n=tFirst('must');return !!n&&!!fvt(n,'f1')}},
+ {t:'📱 화면 카드 놓기',x:'여기부터는 「🔗 흐름 카드」예요. 「화면」 카드를 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'왼쪽 「화면」 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
+ {t:'📱 화면 하나 더',x:'화면 카드를 하나 더 놓아 보세요. 두 번째 화면이에요.',el:tPal('screen'),done:function(){return ofType('screen').length>=2}},
+ {t:'🔗 화면끼리 이어 주기',x:'첫 번째 화면의 동그라미를 잡고 두 번째 화면까지 끌어서 이어 보세요. 이어지지 않은 맨 앞 화면이 첫 화면이 돼요.',h:'첫 번째 화면 오른쪽 파란 동그라미를 잡고, 두 번째 화면 위까지 끌어서 놓아요.',el:function(){var n=ofType('screen')[0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('screen','screen').length>=1}},
  {t:'🏷️ 버튼 이름 붙이기',c:1,x:'방금 이은 선이 버튼이 돼요. 오른쪽에 버튼 이름을 쓰고 「다 썼어요」를 눌러요. (예: 시작하기)',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').some(function(e){return !!(e.label||'').trim()})}},
  {t:'👆 눌러 보기',x:'오른쪽 폰에서 방금 만든 버튼을 눌러 보세요. 정말 앱처럼 움직여요!',el:function(){return $('proto')},done:function(){return !!TOURS.pc}},
- {t:'📋 기획서 만들기',x:'위쪽 「기획서 만들기」를 눌러 보세요. 만든 기획이 글로 정리돼요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}
+ {t:'📋 기획서 만들기',x:'위쪽 「기획서 만들기」를 눌러 보세요. 기획 카드와 화면 흐름이 한 장의 글로 정리돼요.',el:function(){return $('bSpec')},done:function(){return specOpen()}}
 ];
 function tPut(t,title,x,n){return {t:title,x:x,h:'왼쪽 보관함의 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal(t),done:function(){return ofType(t).length>=n}}}
 function tLnk(fa,ta,title,x,i){return {t:title,x:x,h:'앞 카드 오른쪽 파란 동그라미를 마우스로 잡고, 뒤 카드 위까지 끌어서 놓아요.',el:function(){var n=ofType(fa)[i||0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf(fa,ta).length>=1}}}
@@ -916,10 +935,13 @@ function build(fn){push();S.nodes=[];S.edges=[];S.seq=0;P=newP();
   function E(a,b,l){S.edges.push({id:'e'+(++S.seq),from:a,to:b,label:l||''})}
   fn(N,E);sel=null;refreshAll();inspector();fit()}
 function sampleApp(N,E){
-  var idea=N('idea',40,20,{title:'우리 반 점심 투표',goal:'점심 메뉴를 쉽게 정해요'}),us=N('users',40,150,{who:'우리 반 친구들'}),st=N('screen',320,85,{name:'시작 화면',heading:'우리 반 점심 투표',body:'오늘 점심을 같이 정해 봐요!'}),
-    ch=N('choice',320,250,{}),vo=N('screen',600,85,{name:'투표 화면',heading:'투표해요',body:''}),sv=N('save',880,250,{}),rs=N('result',1150,250,{}),
-    rsc=N('screen',1420,85,{name:'결과 화면',heading:'투표 끝!',body:'친구들 결과를 확인해 보세요.'});
-  E(idea,st);E(us,st);E(st,vo,'투표하러 가기');E(ch,vo);E(vo,sv,'투표하면');E(vo,rsc,'투표 완료');E(sv,rs);E(rs,rsc)}
+  N('idea',40,-60,{title:'우리 반 점심 투표',goal:'점심 메뉴를 쉽게 정해요'});N('users',240,-60,{who:'우리 반 친구들',when:'점심시간 직전 교실에서'});
+  N('problem',440,-60,{problem:'점심 메뉴를 정하는 데 10분이나 걸려요',better:'1분 안에 투표로 정해요'});N('must',640,-60,{f1:'메뉴에 투표하기',f2:'결과 보기',f3:'한 번만 투표하게 막기'});
+  N('nice',840,-60,{items:'지난 투표 기록, 친구에게 공유'});N('notnow',1040,-60,{items:'로그인, 결제, 채팅'});N('look',1240,-60,{mood:'밝고 귀여운',color:'노랑과 하늘색'});
+  var st=N('screen',40,110,{name:'시작 화면',heading:'우리 반 점심 투표',body:'오늘 점심을 같이 정해 봐요!'}),
+    ch=N('choice',320,275,{}),vo=N('screen',320,110,{name:'투표 화면',heading:'투표해요',body:''}),sv=N('save',600,275,{}),rs=N('result',880,275,{}),
+    rsc=N('screen',600,110,{name:'결과 화면',heading:'투표 끝!',body:'친구들 결과를 확인해 보세요.'});
+  E(st,vo,'투표하러 가기');E(ch,vo);E(vo,sv,'투표하면');E(vo,rsc,'투표 완료');E(sv,rs);E(rs,rsc)}
 function sampleImage(N,E){
   var su=N('i_subject',40,100,{what:'교복을 입은 초등학생 5명',action:'두 팔을 번쩍 들고 환하게 웃어요',look:'서로 어깨동무를 하고 있어요'}),
     sy=N('i_style',310,100,{style:'일러스트',detail:'선이 굵고 귀여운 포스터 그림'}),
