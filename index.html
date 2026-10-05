@@ -415,7 +415,8 @@ function removeSel(){if(!sel)return;push();
   if(sel.kind==='node'){S.nodes=S.nodes.filter(function(n){return n.id!==sel.id});S.edges=S.edges.filter(function(e){return e.from!==sel.id&&e.to!==sel.id})}
   else S.edges=S.edges.filter(function(e){return e.id!==sel.id});
   sel=null;refreshAll();inspector()}
-function setSel(s){sel=s;syncNodes();drawEdges();hint();inspector()}
+var wasIdea=false;
+function setSel(s){sel=s;syncNodes();drawEdges();hint();inspector();if(ideaSel()!==wasIdea){wasIdea=ideaSel();proto()}}
 
 /* ---------- 화면 이동 · 확대 ---------- */
 function applyView(){world.style.transform='translate('+view.x+'px,'+view.y+'px) scale('+view.k+')';
@@ -480,7 +481,7 @@ cv.addEventListener('pointerdown',function(e){
   ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
   if(Object.keys(ptrs).length===2){var ks=Object.keys(ptrs),a=ptrs[ks[0]],b=ptrs[ks[1]],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
     drag={t:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y)||1,k0:view.k,wp:toWorld(mx,my)};cv.classList.remove('panning');return}
-  if(sel){sel=null;syncNodes();drawEdges();hint();inspector()}
+  if(sel){sel=null;syncNodes();drawEdges();hint();inspector();if(wasIdea){wasIdea=false;proto()}}
   startPan(e)});
 window.addEventListener('pointermove',function(e){
   if(ptrs[e.pointerId]){ptrs[e.pointerId]={x:e.clientX,y:e.clientY}}
@@ -588,7 +589,10 @@ function startScreen(){var sc=ofType('screen');if(!sc.length)return null;
 function optsOf(n){return fv(n,'opts').split(',').map(function(s){return s.trim()}).filter(Boolean).slice(0,6)}
 var BASE=[4,2,3,1,2,1];
 function counts(n){var o=optsOf(n),ex=P.extra[n.id]||[];return o.map(function(_,i){return BASE[i]+(ex[i]||0)})}
+function ideaSel(){var n=MODE==='app'&&sel&&sel.kind==='node'?nb(sel.id):null;return !!n&&n.type==='idea'}
 function protoApp(){var box=$('proto'),st=startScreen();
+  wasIdea=ideaSel();
+  if(wasIdea){box.innerHTML='<div class="card"><div class="protoempty" style="line-height:1.7">💡 <b>앱 아이디어 카드</b>는 화면이 아니에요.<br>앱의 <b>이름과 목적</b>을 적어 두는 카드예요.<br>여기에 적은 이름은 폰 화면 맨 위와 기획서에 들어가요.<br><br>폰 화면을 보려면 <b>화면 카드</b>를 눌러 보세요.</div></div>';return}
   if(!st){box.innerHTML='<div class="phone"><div class="screen"><div class="protoempty">화면 카드를 추가하면<br>여기에 폰 화면이 나와요.</div></div></div>';P.cur=null;syncNodes();return}
   var cur=P.cur&&nb(P.cur)&&nb(P.cur).type==='screen'?nb(P.cur):st;P.cur=cur.id;
   var idea=firstOf('idea'),inE=S.edges.filter(function(e){return e.to===cur.id}),outE=S.edges.filter(function(e){return e.from===cur.id});
@@ -817,7 +821,7 @@ TOURSET.app=[
  {t:'💡 아이디어 카드 놓기',x:'왼쪽 보관함의 「앱 아이디어」 카드를 캔버스로 끌어다 놓아 보세요. (눌러도 돼요)',h:'카드를 마우스로 꾹 잡고 가운데 캔버스(점선 칸) 위에서 놓으면 돼요. 카드를 한 번 눌러도 생겨요.',el:tPal('idea'),done:function(){return ofType('idea').length>=1}},
  {t:'✍️ 내용 쓰기',c:1,x:'오른쪽 칸에서 앱 이름을 내 앱 이름으로 바꿔 쓰세요. 다 썼으면 「다 썼어요」를 눌러요.',h:'오른쪽 「앱 이름」 칸을 눌러 지우고 내 앱 이름을 쓰면 돼요. 카드를 먼저 한 번 눌러야 칸이 보여요.',el:function(){return $('insp')},done:function(){var n=tFirst('idea'),d=TYPES.idea.f[0].d;return !!n&&!!fvt(n,'title')&&fv(n,'title')!==d}},
  {t:'📱 화면 카드 놓기',x:'이번엔 「화면」 카드를 캔버스에 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'왼쪽 「화면」 카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
- {t:'🔗 카드 이어 주기',x:'아이디어 카드 오른쪽의 동그라미를 잡고, 화면 카드까지 끌어서 이어 보세요.',h:'아이디어 카드 오른쪽 파란 동그라미를 마우스로 잡고, 화면 카드 위까지 끌어서 놓아요.',el:function(){var n=tFirst('idea');return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('idea','screen').length>=1}},
+ {t:'🔗 카드 이어 주기',x:'아이디어 카드 오른쪽의 동그라미를 잡고, 화면 카드까지 끌어서 이어 보세요. 이으면 "이 앱의 첫 화면은 여기"라고 한눈에 보여요.',h:'아이디어 카드 오른쪽 파란 동그라미를 마우스로 잡고, 화면 카드 위까지 끌어서 놓아요.',el:function(){var n=tFirst('idea');return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('idea','screen').length>=1}},
  {t:'📱 화면 하나 더',x:'화면 카드를 하나 더 놓아 보세요. 두 번째 화면이에요.',h:'왼쪽 「화면」 카드를 한 번 더 누르면 두 번째 화면이 생겨요.',el:tPal('screen'),done:function(){return ofType('screen').length>=2}},
  {t:'🔗 화면끼리 이어 주기',x:'첫 번째 화면의 동그라미를 잡고 두 번째 화면까지 끌어서 이어 보세요.',h:'첫 번째 화면 오른쪽 파란 동그라미를 잡고, 두 번째 화면 위까지 끌어서 놓아요.',el:function(){var n=ofType('screen')[0];return n&&els[n.id]?els[n.id].querySelector('.port.out'):null},done:function(){return tEdgeOf('screen','screen').length>=1}},
  {t:'🏷️ 버튼 이름 붙이기',c:1,x:'방금 이은 선이 버튼이 돼요. 오른쪽에 버튼 이름을 쓰고 「다 썼어요」를 눌러요. (예: 시작하기)',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').some(function(e){return !!(e.label||'').trim()})}},
