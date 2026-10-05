@@ -209,6 +209,18 @@ body.sub-plan #pal,body.sub-plan #side,body.sub-plan #cv{display:none}
 .psec .hd span.dd{font-size:12px;color:var(--sub)}
 .psec label{display:block;font-size:12px;color:var(--sub);margin:8px 0 3px}
 .pnext{text-align:center;padding-top:6px}
+#pGo.soft{background:var(--panel);color:var(--ink);border-color:var(--line)}
+#pGo.ready{animation:pgo 1.4s ease-in-out infinite}
+@keyframes pgo{50%{box-shadow:0 0 0 6px rgba(47,111,235,.25)}}
+.pprog{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:13px;color:var(--sub);display:flex;flex-direction:column;gap:6px}
+.pprog b{color:var(--ink)}
+.pprog .bar{display:flex;gap:4px}.pprog .bar i{flex:1;height:6px;border-radius:3px;background:var(--line)}.pprog .bar i.on{background:var(--accent)}
+.pref{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--sub)}
+.pref .rt{font-weight:700}
+.pref .rk{display:block;font-size:11px;margin-top:4px}
+.pref .chip{display:block;background:var(--cbg);color:var(--ink);border-radius:8px;padding:4px 8px;margin-top:3px;line-height:1.3;word-break:break-all}
+.pref a{color:var(--accent);cursor:pointer;font-weight:600}
+@media (max-width:900px){.pref{display:none}}
 #runModal{position:fixed;inset:0;z-index:55;background:rgba(20,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 #runBox{width:min(460px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:10px;background:var(--panel);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:14px}
 #runHead{display:flex;align-items:center;gap:8px}
@@ -504,7 +516,7 @@ function hint(){var t;
     if(miss)t='오른쪽 점검표의 ⚠️ 부분을 채우면 프롬프트가 더 구체적이 돼요 ('+miss+'곳)';
     else t='좋아요! 점검을 모두 통과했어요. 위쪽 버튼으로 프롬프트를 복사해 AI에 붙여넣어 보세요'}
   $('hint').textContent=t;$('empty').style.display=vnodes().length?'none':'block'}
-function refreshAll(){syncNodes();drawEdges();hint();proto();applyView();if(MODE==='app'&&SUB==='plan')renderPlan();if(specOpen())$('spec').value=specText();tourCheck()}
+function refreshAll(){refPal();syncNodes();drawEdges();hint();proto();applyView();if(MODE==='app'&&SUB==='plan')renderPlan();if(specOpen())$('spec').value=specText();tourCheck()}
 
 /* ---------- 마우스 · 터치 ---------- */
 function startPan(e){drag={t:'pan',sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y};cv.classList.add('panning')}
@@ -574,7 +586,17 @@ function buildPalette(){var h='<h2>카드 보관함</h2>';
   if(MODE==='app')h+='<div class="pgrp">🔗 화면 흐름 카드 · 선으로 이어요</div>';
   MODES[MODE].order.forEach(function(k){var t=TYPES[k];if(t.m==='app'&&t.c==='plan')return;
     h+='<div class="pitem" data-t="'+k+'" data-c="'+t.c+'"><div class="ico">'+t.ic+'</div><div><b>'+t.nm+'</b><span class="d">'+t.d+'</span></div></div>'});
-  $('pal').innerHTML=h}
+  if(MODE==='app')h+='<div class="pref" id="pref"></div>';
+  $('pal').innerHTML=h;refPal()}
+function refPal(){var box=$('pref');if(!box)return;var idea=firstOf('idea'),us=firstOf('users'),mu=firstOf('must'),lk=firstOf('look'),h='';
+  function row(k,v){return v?'<span class="rk">'+k+'</span><span class="chip">'+esc(v)+'</span>':''}
+  var feats=['f1','f2','f3'].map(function(k){return fvt(mu,k)}).filter(Boolean);
+  h+=row('앱 이름',fvt(idea,'title'))+row('무슨 앱',fvt(idea,'goal'))+row('쓰는 사람',fvt(us,'who'));
+  if(feats.length)h+='<span class="rk">꼭 필요한 기능 → 화면으로 만들어요</span>'+feats.map(function(f){return '<span class="chip">⭐ '+esc(f)+'</span>'}).join('');
+  h+=row('분위기',fvt(lk,'mood'));
+  h=h?'<div class="rt">📝 내 기획 참고</div>'+h:'<div class="rt">📝 내 기획 참고</div><div>기획 탭에 쓰면 여기에 나와요.</div>';
+  h+='<a id="pRefGo">기획 고치러 가기</a>';
+  if(box.dataset.h!==h){box.dataset.h=h;box.innerHTML=h}}
 var addCount=0;
 $('pal').addEventListener('pointerdown',function(e){
   var it=e.target.closest('.pitem');if(!it||e.button>0)return;var type=it.dataset.t,sx=e.clientX,sy=e.clientY,ghost=null,moved=false;
@@ -681,15 +703,20 @@ function pfield(t,f,v){var id='p_'+t+'_'+f.k,ph=f.ph||(f.d?'예: '+f.d:''),h='<l
   else h+='<input id="'+id+'" data-t="'+t+'" data-k="'+f.k+'" value="'+esc(v)+'" placeholder="'+esc(ph)+'">';
   if(f.t==='pick')h+='<div class="pks">'+f.o.map(function(o){return '<button type="button" data-pv="'+esc(o)+'" class="'+(o===v?'on':'')+'">'+esc(o)+'</button>'}).join('')+'</div>';
   return h}
-function renderPlan(){var h='<div class="plan"><h2>📝 앱 기획</h2><p class="pd">앱을 만들기 전에 생각을 적어 두는 곳이에요. 비워 둔 칸은 기획서에 안 들어가요. 화면을 이어 보는 건 위쪽 「🔗 화면 흐름」 탭에서 해요.</p>';
+function renderPlan(){var h='<div class="plan"><h2>📝 앱 기획</h2><p class="pd">앱을 만들기 전에 생각을 적어 두는 곳이에요. 비워 둔 칸은 기획서에 안 들어가요. 화면을 이어 보는 건 위쪽 「🔗 화면 흐름」 탭에서 해요.</p><div class="pprog" id="pprog"></div>';
   PLAN.forEach(function(t){var d=TYPES[t],n=firstOf(t),main='',more='',mf=false;
     d.f.forEach(function(f){var v=n?fv(n,f.k):'',fh=pfield(t,f,v);if(f.more){more+=fh;if(v.trim())mf=true}else main+=fh});
     h+='<section class="psec" data-pt="'+t+'" data-c="plan"><div class="hd"><span class="ico">'+d.ic+'</span><div><b>'+d.nm+'</b><span class="dd">'+esc(d.d)+'</span></div></div>'+main+(more?'<details class="more"'+(mf?' open':'')+'><summary>더 자세히 ▾</summary>'+more+'</details>':'')+'</section>'});
   h+='<div class="pnext"><button class="btn-main" id="pGo">다음: 화면 흐름 만들기 ▶</button></div></div>';
-  $('planv').innerHTML=h}
+  $('planv').innerHTML=h;planProg()}
+var REQK={idea:'title',users:'who',problem:'problem',must:'f1'},REQN={idea:'앱 이름',users:'쓰는 사람',problem:'해결할 문제',must:'꼭 필요한 기능'};
+function planProg(){var box=$('pprog');if(!box)return;var keys=Object.keys(REQK),miss=[];
+  keys.forEach(function(t){if(!fvt(firstOf(t),REQK[t]))miss.push(REQN[t])});var done=keys.length-miss.length,ok=!miss.length;
+  box.innerHTML='<div>'+(ok?'<b>🎉 꼭 쓸 칸을 다 채웠어요!</b> 이제 화면 흐름으로 가 볼까요?':'꼭 쓸 칸 <b>'+keys.length+'개 중 '+done+'개</b> 채웠어요 · 남은 칸: '+miss.join(', '))+'</div><div class="bar">'+keys.map(function(t,i){return '<i class="'+(fvt(firstOf(t),REQK[t])?'on':'')+'"></i>'}).join('')+'</div>';
+  var g=$('pGo');if(g){g.classList.toggle('ready',ok);g.classList.toggle('soft',!ok);g.textContent=ok?'화면 흐름 만들러 가요 ▶':'다음: 화면 흐름 만들기 ▶'}}
 function setPlan(t,k,v){var n=firstOf(t);
   if(!n){n={id:'n'+(++S.seq),type:t,x:0,y:0,f:{}};TYPES[t].f.forEach(function(f){n.f[f.k]=''});S.nodes.push(n)}
-  n.f[k]=v;persist();if(specOpen())$('spec').value=specText()}
+  n.f[k]=v;persist();planProg();if(specOpen())$('spec').value=specText()}
 $('planv').addEventListener('input',function(e){var el=e.target;if(!el.dataset||!el.dataset.t)return;if(!editing){push();editing=true}setPlan(el.dataset.t,el.dataset.k,el.value)});
 $('planv').addEventListener('focusout',function(){editing=false});
 $('planv').addEventListener('click',function(e){
@@ -700,6 +727,7 @@ function applySub(){var plan=MODE==='app'&&SUB==='plan'&&!VIEW;
   document.body.classList.toggle('sub-plan',plan);$('planv').hidden=!plan;$('subtabs').hidden=!(MODE==='app'&&!VIEW);$('bRun').hidden=MODE!=='app';
   $('subtabs').querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.s===SUB)});if(plan)renderPlan()}
 function setSub(x){SUB=x;applySub();refreshAll();inspector();if(x==='flow'&&!S.view)fit()}
+$('pal').addEventListener('click',function(e){if(e.target.closest('#pRefGo'))setSub('plan')});
 $('subtabs').addEventListener('click',function(e){var b=e.target.closest('button');if(b&&b.dataset.s!==SUB)setSub(b.dataset.s)});
 /* 프로토타입 실행 (큰 창) */
 function openRun(){if(!startScreen()){toast('화면 카드를 먼저 놓아 주세요');return}
