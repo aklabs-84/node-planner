@@ -457,7 +457,8 @@ function push(){hist.push(snap());if(hist.length>60)hist.shift()}
 function undo(){if(!hist.length){toast('되돌릴 게 없어요');return}var o=JSON.parse(hist.pop());S.nodes=o.nodes;S.edges=o.edges;S.seq=o.seq;
   if(sel&&!(sel.kind==='node'?nb(sel.id):eb(sel.id)))sel=null;refreshAll();inspector()}
 function boardsOut(){B[MODE].view=view;var o={};Object.keys(B).forEach(function(m){o[m]={nodes:B[m].nodes,edges:B[m].edges,seq:B[m].seq,view:B[m].view}});return o}
-function persist(){if(VIEW)return;clearTimeout(saveT);saveT=setTimeout(function(){try{localStorage.setItem(KEY,JSON.stringify({mode:MODE,boards:boardsOut()}))}catch(e){}},400)}
+var guardOn=false,guardDirty=false;/* 클래스로그 입장 학생이 실수로 창을 닫지 않게 하는 경고용 표시 */
+function persist(){if(VIEW)return;if(guardOn)guardDirty=true;clearTimeout(saveT);saveT=setTimeout(function(){try{localStorage.setItem(KEY,JSON.stringify({mode:MODE,boards:boardsOut()}))}catch(e){}},400)}
 function okView(v){return v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.k)&&v.k>=.3&&v.k<=1.6?{x:+v.x,y:+v.y,k:+v.k}:null}
 function readStore(){/* 저장된 내용을 {mode,boards} 모양으로 읽는다 (옛 v1 앱 데이터도 이어받음) */
   try{var o=JSON.parse(localStorage.getItem(KEY)||'null');if(o&&o.boards)return o}catch(e){}
@@ -1352,7 +1353,8 @@ var CL={entry:null,name:null,id:null};
 (function(){var q=new URLSearchParams(location.search),clip=function(k){return (q.get(k)||'').trim().slice(0,100)||null};
   CL.entry=clip('entryCode');CL.name=clip('studentName');CL.id=clip('studentId')})();
 function clUI(){var on=!!CL.entry&&!VIEW;$('clBox').hidden=!on;
-  if(on)$('clWho').textContent=(CL.name?CL.name+' 학생, ':'')+'기획이 끝나면 아래 버튼으로 선생님께 제출해요. 여러 번 눌러도 돼요.'}
+  if(on)$('clWho').textContent=(CL.name?CL.name+' 학생, ':'')+'기획이 끝나면 아래 버튼으로 선생님께 제출해요. 여러 번 눌러도 돼요. (작업 중에는 창을 닫지 마세요. 내용은 이 브라우저에 자동 저장돼요.)'}
+window.addEventListener('beforeunload',function(e){if(CL.entry&&!VIEW&&guardDirty){e.preventDefault();e.returnValue=''}});
 $('bSubmit').onclick=async function(){var btn=this,msg=$('clMsg');
   if(!S.nodes.length){msg.textContent='먼저 카드를 만들어 보세요.';return}
   btn.disabled=true;msg.textContent='제출하는 중이에요…';
@@ -1363,7 +1365,7 @@ $('bSubmit').onclick=async function(){var btn=this,msg=$('clMsg');
     resultType:link?'link':'text',linkUrl:link||undefined,textContent:doc.slice(0,18000)};
   try{var r=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!r.ok){var er=await r.json().catch(function(){return {}});throw new Error(er&&er.error||'제출 실패 ('+r.status+')')}
-    msg.textContent='✅ 제출했어요! '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+(link?'':' (링크 없이 글로만 제출됐어요)')}
+    guardDirty=false;msg.textContent='✅ 제출했어요! '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+(link?'':' (링크 없이 글로만 제출됐어요)')}
   catch(e){msg.textContent='제출하지 못했어요: '+e.message+' 잠시 뒤 다시 눌러 보세요.'}
   btn.disabled=false};
 
@@ -1379,7 +1381,8 @@ $('bSubmit').onclick=async function(){var btn=this,msg=$('clMsg');
     else if(B[shared.mode].nodes.length&&!window.confirm('받은 기획을 열면 지금 이 브라우저에 있던 '+MODES[shared.mode].nm+' 작업이 바뀌어요. 계속할까요?')){shared=null;history.replaceState(null,'',location.pathname+location.search)}}
   if(shared){if(shared.mode!==MODE){B[MODE].view=view;MODE=shared.mode;S=B[MODE];view={x:60,y:80,k:1}}
     S.nodes=shared.nodes;S.edges=shared.edges;S.seq=shared.seq}
-  setModeUI();refreshAll();inspector();clUI();if(shared)fit()
+  setModeUI();refreshAll();inspector();clUI();if(shared)fit();
+  setTimeout(function(){guardOn=true},0)
 })();
 })();
 </script>
