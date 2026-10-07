@@ -190,8 +190,12 @@ body.view main{grid-template-columns:minmax(0,1fr) 340px}
 #specmsg{flex:1;font-size:12px;color:var(--sub);min-width:140px}
 #tourSpot{position:fixed;z-index:70;pointer-events:none;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,15,25,.55);outline:3px solid var(--accent);transition:left .25s,top .25s,width .25s,height .25s;animation:tpulse 1.2s ease-in-out infinite}
 @keyframes tpulse{50%{outline-offset:4px}}
-#tourPop{position:fixed;z-index:71;width:292px;max-width:calc(100vw - 20px);background:var(--panel);color:var(--ink);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:14px}
-#tourPop .tn{font-size:11px;color:var(--sub);font-weight:700}
+#tourPop{position:fixed;z-index:71;width:292px;max-width:calc(100vw - 20px);background:var(--panel);color:var(--ink);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:14px;transition:left .2s,top .2s}
+#tourPop.drag{transition:none}
+#tourPop .tn{font-size:11px;color:var(--sub);font-weight:700;display:flex;justify-content:space-between;align-items:center;cursor:grab;touch-action:none;user-select:none}
+#tourPop.drag .tn{cursor:grabbing}
+#tourPop .tn button{font-size:11px;padding:2px 8px;cursor:pointer}
+#tourPop.min p,#tourPop.min .th{display:none}
 #tourPop b{display:block;font-size:15px;margin:2px 0 4px}
 #tourPop p{margin:0 0 10px;font-size:13px;line-height:1.5}
 #tourPop .th{font-size:12px;color:var(--sub);line-height:1.45;background:var(--bg);border-radius:8px;padding:6px 8px;margin:0 0 10px}
@@ -1207,8 +1211,9 @@ function tourCheck(){
   var i=0;while(i<TSTEPS.length&&tStepDone(i))i++;
   TOURS.i=i;if(i>=TSTEPS.length){tourEnd(true);return}
   if(tourKey!==i){tourKey=i;var st=TSTEPS[i],pop=$('tourPop');
-    pop.innerHTML='<div class="tn">'+(i+1)+' / '+TSTEPS.length+'</div><b>'+st.t+'</b><p>'+st.x+'</p>'+(st.h?'<div class="th">💬 막히면: '+st.h+'</div>':'')+'<div class="tb"><button id="tpEnd">그만하기</button>'+(st.c?'<button id="tpOk" class="btn-main">다 썼어요 ✓</button>':'')+'</div>';
-    if(st.c)$('tpOk').onclick=tourOk;$('tpEnd').onclick=function(){tourEnd(false)};
+    TOURS.pos=null;TOURS.slot=null;pop.classList.toggle('min',!!TOURS.min);
+    pop.innerHTML='<div class="tn" id="tpDrag"><span>⠿ '+(i+1)+' / '+TSTEPS.length+' · 끌어서 옮겨요</span><button id="tpMin" type="button">'+(TOURS.min?'펴기':'접기')+'</button></div><b>'+st.t+'</b><p>'+st.x+'</p>'+(st.h?'<div class="th">💬 막히면: '+st.h+'</div>':'')+'<div class="tb"><button id="tpEnd">그만하기</button>'+(st.c?'<button id="tpOk" class="btn-main">다 썼어요 ✓</button>':'')+'</div>';
+    $('tpMin').onclick=function(){TOURS.min=!TOURS.min;pop.classList.toggle('min',TOURS.min);$('tpMin').textContent=TOURS.min?'펴기':'접기';TOURS.slot=null;tourPlace()};if(st.c)$('tpOk').onclick=tourOk;$('tpEnd').onclick=function(){tourEnd(false)};
     var el=st.el();if(el&&el.scrollIntoView)try{el.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
   var okb=$('tpOk');if(okb)okb.disabled=!TSTEPS[TOURS.i].done();
   tourPlace()}
@@ -1216,15 +1221,26 @@ function tourPlace(){
   if(!TOURS||!TOURS.on)return;
   var st=TSTEPS[TOURS.i];if(!st)return;
   var el=st.el(),sp=$('tourSpot'),pop=$('tourPop');pop.hidden=false;
-  var vw=window.innerWidth,vh=window.innerHeight,pw=pop.offsetWidth,ph=pop.offsetHeight,x,y;
-  if(!el||!el.getBoundingClientRect().width){sp.hidden=true;x=(vw-pw)/2;y=(vh-ph)/2}
-  else{var r=el.getBoundingClientRect(),pad=el.classList.contains('port')?10:6;
-    sp.hidden=false;sp.style.left=(r.left-pad)+'px';sp.style.top=(r.top-pad)+'px';sp.style.width=(r.width+pad*2)+'px';sp.style.height=(r.height+pad*2)+'px';
-    if(r.right+14+pw<=vw){x=r.right+14;y=r.top}
-    else if(r.left-14-pw>=0){x=r.left-14-pw;y=r.top}
-    else if(r.bottom+14+ph<=vh){x=r.left;y=r.bottom+14}
-    else{x=r.left;y=r.top-14-ph}}
+  var vw=window.innerWidth,vh=window.innerHeight,pw=pop.offsetWidth,ph=pop.offsetHeight,x,y,tr=null;
+  if(!el||!el.getBoundingClientRect().width)sp.hidden=true;
+  else{var r=el.getBoundingClientRect(),pad=el.classList.contains('port')?10:6;tr=r;
+    sp.hidden=false;sp.style.left=(r.left-pad)+'px';sp.style.top=(r.top-pad)+'px';sp.style.width=(r.width+pad*2)+'px';sp.style.height=(r.height+pad*2)+'px'}
+  if(TOURS.pos){x=TOURS.pos.x;y=TOURS.pos.y}
+  else{var m=10,C=[[m,m],[vw-pw-m,m],[m,vh-ph-m],[vw-pw-m,vh-ph-m],[m,(vh-ph)/2],[vw-pw-m,(vh-ph)/2]],obs=[];
+    Object.keys(els).forEach(function(k){var q=els[k]&&els[k].getBoundingClientRect();if(q&&q.width)obs.push(q)});
+    function ov(a,q,g){var w=Math.min(a.x+pw,q.right+g)-Math.max(a.x,q.left-g),h=Math.min(a.y+ph,q.bottom+g)-Math.max(a.y,q.top-g);return w>0&&h>0?w*h:0}
+    var sc=C.map(function(c){var a={x:Math.max(m,c[0]),y:Math.max(m,c[1])},t=tr?ov(a,tr,30)*1000:0;obs.forEach(function(q){t+=ov(a,q,0)});return t}),best=Math.min.apply(null,sc);
+    if(TOURS.slot==null||sc[TOURS.slot]>best)TOURS.slot=sc.indexOf(best);
+    x=C[TOURS.slot][0];y=C[TOURS.slot][1]}
   pop.style.left=Math.max(10,Math.min(x,vw-pw-10))+'px';pop.style.top=Math.max(10,Math.min(y,vh-ph-10))+'px'}
+(function(){var pop=$('tourPop'),d=null;
+  pop.addEventListener('pointerdown',function(e){if(!TOURS||!e.target.closest('#tpDrag')||e.target.closest('button'))return;
+    var r=pop.getBoundingClientRect();d={dx:e.clientX-r.left,dy:e.clientY-r.top};pop.classList.add('drag');try{pop.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()});
+  pop.addEventListener('pointermove',function(e){if(!d||!TOURS)return;
+    var x=Math.max(10,Math.min(e.clientX-d.dx,window.innerWidth-pop.offsetWidth-10)),y=Math.max(10,Math.min(e.clientY-d.dy,window.innerHeight-pop.offsetHeight-10));
+    TOURS.pos={x:x,y:y};pop.style.left=x+'px';pop.style.top=y+'px'});
+  function up(){d=null;pop.classList.remove('drag')}
+  pop.addEventListener('pointerup',up);pop.addEventListener('pointercancel',up)})();
 $('bTour').onclick=startTourBtn;$('bTour2').onclick=startTourBtn;
 $('proto').addEventListener('click',function(){if(TOURS)TOURS.pc=true});$('runBig').addEventListener('click',function(){if(TOURS)TOURS.pc=true});
 document.addEventListener('click',function(){setTimeout(tourCheck,0)},true);
