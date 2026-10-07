@@ -979,11 +979,15 @@ function tFirst(t){return ofType(t)[0]}
 function tEdgeOf(fa,ta){return S.edges.filter(function(e){var a=nb(e.from),b=nb(e.to);return a&&b&&a.type===fa&&b.type===ta})}
 function tPal(t){return function(){return document.querySelector('.pitem[data-t="'+t+'"]')}}
 var TSTEPS=[],TOURSET={};
+function pDone(t){return function(){var n=tFirst(t);return !!n&&TYPES[t].f.every(function(f){return f.more||!!fvt(n,f.k)})}}
 TOURSET.app=[
- {t:'💡 앱 아이디어 쓰기',c:1,x:'「앱 아이디어」 칸에 만들고 싶은 앱 이름을 쓰고, 무슨 앱인지도 한 줄 써요. 다 썼으면 「다 썼어요」를 눌러요.',h:'기획 탭에서는 카드를 놓지 않고 칸에 바로 적으면 돼요.',el:tSec('idea'),done:function(){return !!fvt(tFirst('idea'),'title')}},
- {t:'👥 쓰는 사람 쓰기',c:1,x:'이 앱을 누가 쓸지 적어 보세요. (예: 우리 반 친구들)',el:tSec('users'),done:function(){return !!fvt(tFirst('users'),'who')}},
- {t:'😣 해결할 문제 쓰기',c:1,x:'지금 어떤 점이 불편해서 이 앱이 필요한지 한두 문장으로 써요.',el:tSec('problem'),done:function(){return !!fvt(tFirst('problem'),'problem')}},
- {t:'⭐ 꼭 필요한 기능 쓰기',c:1,x:'이게 없으면 앱이 아닌 기능을 하나 이상 써요. (예: 메뉴에 투표하기)',h:'기능 1 칸에 쓰면 돼요. 나머지는 비워 둬도 돼요.',el:tSec('must'),done:function(){return !!fvt(tFirst('must'),'f1')}},
+ {t:'💡 앱 아이디어 쓰기',c:1,x:'「앱 아이디어」 칸에 만들고 싶은 앱 이름을 쓰고, 무슨 앱인지도 한 줄 써요. 다 썼으면 「다 썼어요」를 눌러요.',h:'기획 탭에서는 카드를 놓지 않고 칸에 바로 적으면 돼요.',el:tSec('idea'),done:pDone('idea')},
+ {t:'👥 쓰는 사람 쓰기',c:1,x:'이 앱을 누가 쓸지 적어 보세요. (예: 우리 반 친구들)',el:tSec('users'),done:pDone('users')},
+ {t:'😣 해결할 문제 쓰기',c:1,x:'지금 어떤 점이 불편해서 이 앱이 필요한지 한두 문장으로 써요.',el:tSec('problem'),done:pDone('problem')},
+ {t:'⭐ 꼭 필요한 기능 쓰기',c:1,x:'이게 없으면 앱이 아닌 기능을 기능 1, 기능 2 칸에 써요. (예: 메뉴에 투표하기, 결과 보기) 다 썼으면 「다 썼어요」를 눌러요.',h:'기능 3은 「더 자세히」 안에 있어요. 쓰고 싶으면 써도 돼요.',el:tSec('must'),done:pDone('must')},
+ {t:'🌱 있으면 좋은 기능 쓰기',c:1,x:'지금은 못 만들어도, 나중에 넣고 싶은 기능을 써요. (예: 지난 투표 기록, 친구에게 공유)',h:'기획 탭을 아래로 내리면 「있으면 좋은 기능」 칸이 있어요.',el:tSec('nice'),done:pDone('nice')},
+ {t:'🚫 이번엔 안 만들 것 쓰기',c:1,x:'일부러 빼는 것을 써요. 이래야 AI가 욕심내서 복잡하게 만들지 않아요. (예: 로그인, 결제, 채팅)',el:tSec('notnow'),done:pDone('notnow')},
+ {t:'🎨 앱 느낌 고르기',c:1,x:'앱의 분위기를 하나 골라요. 다 골랐으면 「다 썼어요」를 눌러요.',h:'분위기 단추를 누르거나 직접 써도 돼요. 주된 색은 「더 자세히」 안에 있어요.',el:tSec('look'),done:pDone('look')},
  {t:'🔗 화면 흐름 탭으로 가기',x:'기획을 적었으니, 이제 화면을 이어 볼 차례예요. 위쪽 「🔗 화면 흐름」 탭을 눌러요.',el:function(){return document.querySelector('#subtabs [data-s="flow"]')},done:function(){return SUB==='flow'}},
  {t:'📱 화면 카드 놓기',x:'왼쪽 「화면」 카드를 캔버스에 놓아 보세요. 앱에서 보이는 화면 한 장이에요.',h:'카드를 눌러도 되고, 캔버스로 끌어다 놓아도 돼요.',el:tPal('screen'),done:function(){return ofType('screen').length>=1}},
  {t:'📱 화면 하나 더',x:'화면 카드를 하나 더 놓아 보세요. 두 번째 화면이에요.',el:tPal('screen'),done:function(){return ofType('screen').length>=2}},
@@ -1045,8 +1049,8 @@ function tPress(x,fn){return {t:'👆 눌러 보기',x:x,el:function(){return $(
 function tMis(ex){return [tNum('custom',1,'🎯 도전! 내 기능 카드','위 카드로 표현할 수 없는 나만의 기능을 덧붙여 봐요. 「내 기능 카드」를 놓아요. '+ex),
   tL('custom','screen',1,'🎯 도전: 화면에 이어 주기','내 기능 카드를 어느 화면에 붙일지 정해서, 카드의 ● 점을 그 화면으로 이어요.'),
   tChg('🎯 도전: 기능 설명 쓰기','기능 이름과 「어떻게 동작해야 하나요?」를 써요. 이 글이 기획서에 들어가 AI가 그대로 만들어 줘요.','custom','name',0)]}
-function tHead(){var a=TOURSET.app;return [a[0],a[1],a[2],a[3],a[4]]}
-function tSpecEnd(){return TOURSET.app[12]}
+function tHead(){return TOURSET.app.slice(0,8)}
+function tSpecEnd(){return TOURSET.app[TOURSET.app.length-1]}
 var COURSES=[
  {id:'c0',ic:'🌱',nm:'워밍업: 화면 이어 보기',d:'화면 두 장을 만들고 버튼으로 이어서 눌러 봐요. 가장 쉬워요.',uses:['화면','선 이어기'],steps:function(){return TOURSET.app},sample:null},
  {id:'c1',ic:'🍱',nm:'1. 우리 반 점심 투표',d:'메뉴를 고르고 투표하면 막대그래프가 올라가는 앱이에요.',uses:['화면','선택지','저장','결과'],
