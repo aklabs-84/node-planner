@@ -660,7 +660,7 @@ function inspector(focusLabel){var box=$('insp');
     var det=box.querySelector('details.more');if(det)det.addEventListener('toggle',function(){moreOpen=det.open;det.querySelector('summary').textContent=det.open?'더 자세히 ▴':'더 자세히 ▾'});
   } else {var e=eb(sel.id);if(!e){box.innerHTML='';return}var a=nb(e.from),b=nb(e.to),k=ekind(a,b);
     var lab=k==='s2s'?'이 화면에서 다음 화면으로 가는 버튼에 쓸 글자':k==='trans'?'이 장면이 끝나고 다음 장면으로 바뀔 때 효과':b.type==='save'?'화면에 생길 저장 버튼에 쓸 글자':'선에 붙일 이름';
-    var ph=k==='s2s'?'예: 투표하러 가기':k==='trans'?'예: 페이드':b.type==='save'?'예: 투표하기':'예: 투표하면';
+    var ph=k==='s2s'?'예: 투표하러 가기':k==='trans'?'예: 페이드':b.type==='save'?'예: 투표하기':'비워 둬도 돼요';
     var note=k==='s2s'?'폰 화면에서 이 글자가 버튼이 돼요.':k==='trans'?'컷=바로 바뀜 · 페이드=서서히 어두워졌다 밝아짐 · 디졸브=겹치면서 바뀜. 비워 두면 컷으로 해요.':b.type==='save'?'화면에 이 글자의 저장 버튼이 생겨요. 눌러야 저장돼요. 비워 두면 「저장하기」예요.':'어떤 때에 이어지는 선인지 적어 두면 기획서에 들어가요.';
     box.innerHTML='<div class="card" data-c="screen"><div class="hd"><b>선</b><span class="tag">'+TYPES[a.type].nm+' → '+TYPES[b.type].nm+'</span><span class="sp"></span><button class="btn-del" id="del">삭제</button></div>'+
       '<label for="el">'+lab+'</label><input id="el" value="'+esc(e.label)+'" placeholder="'+ph+'">'+
@@ -1037,14 +1037,15 @@ function tNum(typ,n,title,x){return {t:title,x:x,h:'왼쪽 보관함의 카드�
 function tL(fa,ta,n,title,x,i){return {t:title,x:x,h:'앞 카드 오른쪽 파란 동그라미를 마우스로 잡고, 뒤 카드 위까지 끌어서 놓아요.',el:function(){var q=ofType(fa)[i||0];return q&&els[q.id]?els[q.id].querySelector('.port.out'):null},done:function(){return tEdgeOf(fa,ta).length>=n}}}
 function tLab(title,x,n){return {t:title,c:1,x:x,h:'선을 한 번 눌러 고르면 오른쪽에 이름 칸이 나와요.',el:function(){return $('insp')},done:function(){return tEdgeOf('screen','screen').filter(function(e){return !!(e.label||'').trim()}).length>=n}}}
 function tSet(title,x,typ,k,v,i){return {t:title,x:x,h:'카드를 눌러 고르면 오른쪽에 칸이 나와요. 거기서 골라요.',el:function(){return $('insp')},done:function(){var n=ofType(typ)[i||0];return !!n&&fv(n,k)===v}}}
-function tSeeRes(){return P.extra>=1&&!!P.cur&&S.edges.some(function(e){var f=nb(e.from);return e.to===P.cur&&f&&f.type==='result'})}
+function tVotes(){var t=0;for(var k in P.extra)(P.extra[k]||[]).forEach(function(v){t+=v||0});return t}
+function tSeeRes(){return (tVotes()>=1||P.entries.length>=1)&&!!P.cur&&S.edges.some(function(e){var f=nb(e.from);return e.to===P.cur&&f&&f.type==='result'})}
 function tRun1(){return {t:'▶ 프로토타입 실행',x:'오른쪽 위 「▶ 프로토타입 실행」을 눌러 큰 화면으로 내 앱을 열어 보세요.',el:function(){return $('bRun')},done:function(){return !!TOURS.ran}}}
 function tClose1(){return {t:'✕ 닫기',x:'다 봤으면 오른쪽 위 ✕를 눌러 닫아요.',el:function(){return $('runX')},done:function(){return !runOpen()}}}
 function tPress(x,fn){return {t:'👆 눌러 보기',x:x,el:function(){return $('runBig')},done:fn}}
 function tMis(ex){return [tNum('custom',1,'🎯 도전! 내 기능 카드','위 카드로 표현할 수 없는 나만의 기능을 덧붙여 봐요. 「내 기능 카드」를 놓아요. '+ex),
   tL('custom','screen',1,'🎯 도전: 화면에 이어 주기','내 기능 카드를 어느 화면에 붙일지 정해서, 카드의 ● 점을 그 화면으로 이어요.'),
   tChg('🎯 도전: 기능 설명 쓰기','기능 이름과 「어떻게 동작해야 하나요?」를 써요. 이 글이 기획서에 들어가 AI가 그대로 만들어 줘요.','custom','name',0)]}
-function tHead(){var a=TOURSET.app;return [a[0],a[3],a[4]]}
+function tHead(){var a=TOURSET.app;return [a[0],a[1],a[2],a[3],a[4]]}
 function tSpecEnd(){return TOURSET.app[12]}
 var COURSES=[
  {id:'c0',ic:'🌱',nm:'워밍업: 화면 이어 보기',d:'화면 두 장을 만들고 버튼으로 이어서 눌러 봐요. 가장 쉬워요.',uses:['화면','선 이어기'],steps:function(){return TOURSET.app},sample:null},
@@ -1063,7 +1064,7 @@ var COURSES=[
    tL('result','screen',1,'🔗 결과 → 결과 화면 잇기','결과 카드의 ● 점을 세 번째(결과) 화면으로 이어요.',null,0),
    tL('screen','screen',2,'🔗 투표 → 결과 화면 잇기','두 번째 화면에서 세 번째 화면으로 선을 이어요. 나중에 이 선이 「투표 끝」 버튼이 돼요.',null,1),
    tRun1(),
-   tPress('메뉴를 하나 고르고 💾 저장 버튼을 눌러 보세요. 그러면 한 표가 쌓여요.',function(){return P.extra>=1}),
+   tPress('메뉴를 하나 고르고 💾 저장 버튼을 눌러 보세요. 그러면 한 표가 쌓여요.',function(){return tVotes()>=1}),
    tPress('이제 결과 화면으로 가는 버튼을 눌러 보세요. 막대그래프에 내 표가 보여요!',tSeeRes),
    tClose1()]).concat(tMis('(예: 한 번만 투표하게 막기)')).concat([tSpecEnd()])},
   sample:function(N,E){
@@ -1202,7 +1203,7 @@ function tourCheck(){
   var i=0;while(i<TSTEPS.length&&tStepDone(i))i++;
   TOURS.i=i;if(i>=TSTEPS.length){tourEnd(true);return}
   if(tourKey!==i){tourKey=i;var st=TSTEPS[i],pop=$('tourPop');
-    pop.innerHTML='<div class="tn">'+(i+1)+' / '+TSTEPS.length+'</div><b>'+st.t+'</b><p>'+st.x+'</p><div class="th">💬 막히면: '+st.h+'</div><div class="tb"><button id="tpEnd">그만하기</button>'+(st.c?'<button id="tpOk" class="btn-main">다 썼어요 ✓</button>':'')+'</div>';
+    pop.innerHTML='<div class="tn">'+(i+1)+' / '+TSTEPS.length+'</div><b>'+st.t+'</b><p>'+st.x+'</p>'+(st.h?'<div class="th">💬 막히면: '+st.h+'</div>':'')+'<div class="tb"><button id="tpEnd">그만하기</button>'+(st.c?'<button id="tpOk" class="btn-main">다 썼어요 ✓</button>':'')+'</div>';
     if(st.c)$('tpOk').onclick=tourOk;$('tpEnd').onclick=function(){tourEnd(false)};
     var el=st.el();if(el&&el.scrollIntoView)try{el.scrollIntoView({block:'nearest',inline:'nearest'})}catch(e){}}
   var okb=$('tpOk');if(okb)okb.disabled=!TSTEPS[TOURS.i].done();
