@@ -1,0 +1,11 @@
+{
+  "name": "node-planner",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "@vercel/functions": "3.11.1"
+  }
+}
